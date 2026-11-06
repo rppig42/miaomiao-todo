@@ -1,0 +1,30 @@
+import { Cloud, events, Native, Settings, Store } from "../mygo.ts";
+import type { Platform } from "./types.ts";
+
+export const desktop: Platform = {
+  kind: "desktop",
+  load: async () => (await Store.load()) || null,
+  save: (json) => void Store.save(json).catch((e) => console.error("保存失败", e)),
+  cloudAvailable: () => Cloud.available(),
+  cloudStart: () => void Cloud.start(),
+  cloudPush: (json) => void Cloud.push(json),
+  cloudFetch: () => void Cloud.fetch(),
+  onCloud: (fn) => void events.cloud.on(fn),
+  onCommand: (fn) => void events.command.on(fn),
+  onQuickAdd: (fn) => void events.quickadd.on(fn),
+  setReminders: (list) => void Native.setReminders(list),
+  notify: (title, body) => void Native.notify(title, body),
+  setBadge: (n) => void Native.setBadge(n),
+  setFocusTitle: (s) => void Native.setFocusTitle(s),
+  setFocusAlerts() {},
+  reloadWidgets() {},
+  confirm: (message, detail, action) => Native.confirm(message, detail, action),
+  settings: () => Settings.get(),
+  setTheme: (theme) => Settings.setTheme(theme),
+  setTray: (on) => Settings.setTray(on),
+  setBadgeEnabled: (on) => Settings.setBadge(on),
+  setOpenAtLogin: (on) => Settings.setOpenAtLogin(on),
+  setShortcut: (name, accel) => Settings.setShortcut(name, accel),
+  resetShortcuts: () => Settings.resetShortcuts(),
+  pauseShortcuts: (paused) => void Settings.pauseShortcuts(paused),
+};

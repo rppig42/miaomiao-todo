@@ -1,0 +1,22 @@
+node_modules/
+/dist/
+/build/
+/.mygo/
+.DS_Store
+# 描述文件不进版本库，丢了按 README 重新生成
+/signing/*.provisionprofile
+# 动态库由 native/ 编译产生
+/resources/darwin-arm64/
+/resources/darwin-amd64/
+/signing/provision/*.xcodeproj/
+/signing/provision/build/
+/signing/provision/Info.plist
+/signing/provision/App.entitlements
+# iOS：工程由 xcodegen 生成，构建产物用完就删
+/ios/*.xcodeproj
+/ios/build/
+/ios/App/Info.plist
+/ios/App/App.entitlements
+/ios/Widgets/Info.plist
+/ios/Widgets/Widgets.entitlements
+/ios/Widgets/generated/

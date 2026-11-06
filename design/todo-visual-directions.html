@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Todo 视觉方向</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:48px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;background:#111;color:#111;overflow-x:hidden}
+a{color:inherit;text-decoration:none;cursor:pointer}
+button,input,textarea{font:inherit;color:inherit;background:none;border:0;outline:0}
+button{cursor:pointer}
+em,i{font-style:normal}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+
+.nav{position:sticky;top:0;z-index:50;height:48px;display:flex;align-items:center;justify-content:center;gap:2px;background:rgba(16,16,18,.86);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:#fff}
+.nav a{height:30px;padding:0 14px;border-radius:15px;font-size:13px;color:#a5a5aa;display:flex;align-items:center;gap:7px;transition:background .2s,color .2s}
+.nav a u{text-decoration:none;font-size:11px;opacity:.55;font-variant-numeric:tabular-nums}
+.nav a:hover{color:#fff}
+.nav a.on{background:#fff;color:#111}
+
+.dir{padding:64px 32px 104px;overflow:hidden}
+.stage{width:1360px;margin:0 auto;zoom:var(--z,1)}
+.head{display:flex;align-items:baseline;gap:14px;margin-bottom:36px}
+.head i{font-size:15px;opacity:.5;font-weight:500}
+.head b{font-size:40px;font-weight:600;letter-spacing:.02em}
+.head p{font-size:17px;opacity:.68;margin-left:6px}
+
+.mac{width:1360px;height:820px;position:relative;overflow:hidden;scroll-margin-top:80px}
+.tl{display:flex;gap:8px}
+.tl b{width:12px;height:12px;border-radius:50%;background:#FF5F57;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14)}
+.tl b:nth-child(2){background:#FEBC2E}
+.tl b:nth-child(3){background:#28C840}
+
+.row{display:flex;justify-content:center;gap:59px;margin-top:64px}
+.ph{width:414px;height:868px;padding:12px;border-radius:66px;background:#08080A;position:relative;flex:none;box-shadow:0 0 0 1.5px #3b3b40,0 30px 70px rgba(0,0,0,.34);scroll-margin-top:72px;transition:box-shadow .3s}
+.ph::before{content:"";position:absolute;z-index:30;top:23px;left:50%;width:124px;height:36px;margin-left:-62px;border-radius:18px;background:#000}
+.scr{width:390px;height:844px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.scr::after{content:"";position:absolute;z-index:29;left:50%;bottom:8px;width:136px;height:5px;margin-left:-68px;border-radius:3px;background:currentColor;opacity:.85;pointer-events:none}
+.sb{height:54px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 10px 44px;font-size:16px;font-weight:600;position:relative;z-index:28;font-family:-apple-system,"PingFang SC",sans-serif;letter-spacing:0}
+.sb span{display:flex;align-items:center;gap:5px}
+.sb svg{height:12px;width:auto;fill:currentColor;display:block}
+.flash{box-shadow:0 0 0 1.5px #3b3b40,0 0 0 7px #FFD21E,0 30px 70px rgba(0,0,0,.34)!important}
+.mac.flash{outline:6px solid #FFD21E;outline-offset:4px}
+
+/* 通用：对勾 + 自然语言输入 */
+.ck{flex:none;position:relative;cursor:pointer}
+.qa{display:flex;align-items:center;gap:10px}
+.nl{position:relative;flex:1;min-width:0}
+.nl textarea,.nl .nl-m{display:block;width:100%;white-space:pre-wrap;word-break:break-word;font:inherit;line-height:inherit;letter-spacing:inherit;padding:0;border:0;margin:0}
+.nl textarea{position:absolute;inset:0;height:100%;resize:none;overflow:hidden;color:transparent;caret-color:var(--ac,currentColor);background:none}
+.nl textarea::placeholder{color:var(--mut,rgba(128,128,128,.8))}
+.nl .nl-m{pointer-events:none;min-height:1lh}
+.nl .nl-m:empty::after{content:"\200b"}
+.nl-c{display:flex;gap:6px;flex:none;align-items:center;flex-wrap:wrap}
+.chip{height:24px;padding:0 8px;border-radius:7px;display:inline-flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}
+.t{transition:background .15s,opacity .25s}
+.t.new{animation:rowin .5s ease}
+@keyframes rowin{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+<symbol id="rise" viewBox="0 0 24 24"><path d="M7 16a5 5 0 0 1 10 0M3 16h2M19 16h2M2 20h20M12 4v3M5 8.5 6.4 10M19 8.5 17.6 10"/></symbol>
+<symbol id="week" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 18h2"/></symbol>
+<symbol id="inbox" viewBox="0 0 24 24"><path d="M3 14h5l1.5 3h5l1.5-3h5"/><path d="M5.5 5h13L21 14v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4z"/></symbol>
+<symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+<symbol id="matrix" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></symbol>
+<symbol id="timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></symbol>
+<symbol id="habit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol>
+<symbol id="tag" viewBox="0 0 24 24"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z"/><circle cx="8" cy="8" r="1.4"/></symbol>
+<symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4c5-2.5 8 2.5 14 0v10c-6 2.5-9-2.5-14 0"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+<symbol id="repeat" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+<symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9M10 20a2 2 0 0 0 4 0"/></symbol>
+<symbol id="sort" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></symbol>
+<symbol id="play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+<symbol id="grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+<symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+<symbol id="up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+</defs></svg>
+
+<nav class="nav" id="nav">
+<a href="#a"><u>A</u>琉璃</a><a href="#b"><u>B</u>表盘</a><a href="#c"><u>C</u>账本</a><a href="#d"><u>D</u>机器</a><a href="#e"><u>E</u>海报</a><a href="#f"><u>F</u>黄历</a>
+</nav>
+<section class="dir A" id="a">
+<style>
+.A{--ac:#2F6BFF;--red:#E5484D;--org:#F09A1A;--grn:#17A673;--ink:#12151C;--mut:rgba(18,21,28,.5);--hair:rgba(18,21,28,.085);color:var(--ink);background:radial-gradient(52% 34% at 6% 8%,#8FD0F7 0,transparent 100%),radial-gradient(50% 30% at 96% 14%,#FBC4AE 0,transparent 100%),radial-gradient(60% 34% at 22% 62%,#A9E7D2 0,transparent 100%),radial-gradient(60% 38% at 90% 80%,#AEC1FD 0,transparent 100%),#E6EDF6}
+.A .mac{border-radius:26px;display:flex;padding:8px;background:rgba(255,255,255,.34);-webkit-backdrop-filter:blur(40px) saturate(1.7);backdrop-filter:blur(40px) saturate(1.7);box-shadow:0 40px 90px rgba(30,50,90,.3),inset 0 0 0 .5px rgba(255,255,255,.85)}
+.a-side{width:248px;flex:none;border-radius:20px;background:rgba(255,255,255,.42);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.9),0 1px 10px rgba(30,50,90,.08);padding:15px 10px;display:flex;flex-direction:column;gap:2px;font-size:14px}
+.a-side .tl{padding:0 6px 14px}
+.a-sr{height:32px;border-radius:10px;background:rgba(18,21,28,.06);display:flex;align-items:center;gap:7px;padding:0 10px;color:var(--mut);margin-bottom:10px;font-size:13px}
+.a-side a.l{height:34px;border-radius:10px;padding:0 10px;display:flex;align-items:center;gap:10px}
+.a-side a.l svg{font-size:17px;color:var(--ac)}
+.a-side a.l em{margin-left:auto;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}
+.a-side a.l.on{background:rgba(47,107,255,.14);color:var(--ac);font-weight:500}
+.a-side a.l.on em{color:var(--ac)}
+.a-side a.l:hover:not(.on){background:rgba(18,21,28,.05)}
+.a-side h6{font-size:12px;font-weight:600;color:var(--mut);padding:16px 10px 5px}
+.a-dot{width:10px;height:10px;border-radius:3.5px;margin:0 3.5px;flex:none}
+.a-vw{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:12px 0 0}
+.a-vw a{height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:rgba(18,21,28,.72);background:rgba(255,255,255,.42)}
+.a-vw a svg{font-size:18px}
+.a-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.a-mh{height:66px;flex:none;display:flex;align-items:center;gap:8px;padding:0 20px 0 26px}
+.a-mh h1{font-size:27px;font-weight:700;letter-spacing:-.01em;margin-right:auto}
+.a-mh h1 small{font-size:14px;font-weight:400;color:var(--mut);margin-left:10px;letter-spacing:0}
+.a-gb{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:17px;background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.9),0 2px 10px rgba(30,50,90,.12)}
+.a-qa{margin:0 16px 8px 20px;min-height:44px;border-radius:14px;background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 .5px rgba(18,21,28,.08);padding:9px 12px;font-size:15px;line-height:24px}
+.a-qa>svg{font-size:18px;color:var(--ac)}
+.A .k-d{color:var(--ac);background:rgba(47,107,255,.12);border-radius:4px}
+.A .k-p{color:var(--red);background:rgba(229,72,77,.12);border-radius:4px}
+.A .k-l{color:var(--grn);background:rgba(23,166,115,.13);border-radius:4px}
+.A .k-r{color:var(--org);background:rgba(240,154,26,.14);border-radius:4px}
+.A .chip.k-d{background:rgba(47,107,255,.12)}
+.a-ls{flex:1;overflow:hidden;padding:0 16px 0 20px}
+.a-g{font-size:12.5px;font-weight:600;color:var(--mut);padding:14px 8px 5px;display:flex;gap:6px}
+.a-g.red{color:var(--red)}
+.A .t{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 10px 0 8px;border-radius:12px;font-size:15px;cursor:default}
+.A .t:hover{background:rgba(18,21,28,.035)}
+.A .t.sel{background:rgba(47,107,255,.11)}
+.A .ck{width:19px;height:19px;border-radius:6px;border:1.8px solid var(--c,#B2B7C2);transition:.15s}
+.A .p1{--c:var(--red)}.A .p2{--c:var(--org)}.A .p3{--c:var(--ac)}
+.A .ck::after{content:"";position:absolute;left:5px;top:1.5px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg) scale(0);transition:.15s}
+.A .t.done .ck{background:#BEC3CC;border-color:#BEC3CC}
+.A .t.done .ck::after{transform:rotate(42deg) scale(1)}
+.A .t.done .tt{color:var(--mut);text-decoration:line-through;text-decoration-color:rgba(18,21,28,.25)}
+.A .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.A .tm{font-size:13px;color:var(--ac);font-variant-numeric:tabular-nums;white-space:nowrap}
+.A .t.done .tm{color:var(--mut)}
+.A .t.over .tm{color:var(--red)}
+.a-tg{font-size:12px;color:var(--mut);background:rgba(18,21,28,.055);padding:2px 7px;border-radius:6px}
+.a-sb{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums}
+.a-dt{width:400px;flex:none;border-left:.5px solid var(--hair);padding:0 24px 18px;display:flex;flex-direction:column}
+.a-dh{height:66px;display:flex;align-items:center;gap:12px;flex:none}
+.a-dh .ck{width:21px;height:21px;border-radius:7px;border:1.8px solid var(--red)}
+.a-dd{font-size:14px;color:var(--ac);margin-right:auto;font-variant-numeric:tabular-nums;font-weight:500}
+.a-dh svg{font-size:17px;color:var(--mut)}
+.d-tt{font-size:24px;font-weight:650;letter-spacing:-.005em;line-height:1.3;margin-bottom:18px}
+.a-st{height:42px;display:flex;align-items:center;gap:11px;font-size:15px;border-bottom:.5px solid var(--hair)}
+.A .a-st .ck{width:17px;height:17px;border-radius:50%}
+.A .a-st .ck::after{left:4px;top:1px;width:4px;height:9px}
+.A .a-st.t{padding:0;border-radius:0;min-height:42px}.A .a-st.t:hover{background:none}
+.A .a-st.t.done .ck{background:var(--ac);border-color:var(--ac)}
+.d-no{font-size:14.5px;line-height:1.75;color:rgba(18,21,28,.72);padding:18px 0;flex:1}
+.a-df{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mut)}
+.a-go{margin-left:auto;height:40px;padding:0 18px;border-radius:20px;background:var(--ac);color:#fff;font-size:14px;font-weight:500;display:flex;align-items:center;gap:7px}
+.a-go svg{fill:#fff;stroke:none;font-size:13px}
+
+.A .scr{background:linear-gradient(#CFE2FB 0,#EEF2F8 300px,#F1F3F8 100%);color:var(--ink)}
+.a-tt{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 12px 24px}
+.a-tt h1{font-size:36px;font-weight:700;letter-spacing:-.01em}
+.a-card{margin:0 14px 12px;border-radius:24px;background:rgba(255,255,255,.82);box-shadow:0 1px 2px rgba(30,50,90,.05);padding:5px 8px}
+.A .scr .t{min-height:50px;font-size:16px;border-radius:14px}
+.A .scr .tm{font-size:13.5px}
+.A .scr .a-g{padding:6px 28px 6px;font-size:13px}
+.a-tabs{position:absolute;z-index:20;left:14px;right:88px;bottom:24px;height:64px;border-radius:32px;display:flex;padding:4px;background:rgba(255,255,255,.58);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.95),0 8px 28px rgba(30,50,90,.2)}
+.a-tabs a{flex:1;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:500}
+.a-tabs a svg{font-size:22px}
+.a-tabs a.on{background:rgba(47,107,255,.14);color:var(--ac)}
+.a-fab{position:absolute;z-index:20;right:14px;bottom:24px;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--ac);font-size:26px;box-shadow:0 8px 24px rgba(47,107,255,.45),inset 0 1px 0 rgba(255,255,255,.4)}
+.a-wk,.a-mo{display:grid;grid-template-columns:repeat(7,1fr);padding:0 12px;text-align:center}
+.a-wk{font-size:12px;color:var(--mut);padding-bottom:6px}
+.a-mo div{height:47px;display:flex;flex-direction:column;align-items:center;padding-top:5px;font-size:17px;font-variant-numeric:tabular-nums}
+.a-mo div b{font-weight:400;width:30px;height:30px;line-height:30px;border-radius:50%}
+.a-mo div.w b{color:var(--mut)}
+.a-mo div.on b{background:var(--ac);color:#fff;font-weight:600}
+.a-mo i{display:flex;gap:2px;height:5px;margin-top:2px}
+.a-mo i u{width:4px;height:4px;border-radius:50%;background:var(--ac);text-decoration:none}
+.a-mo i u.o{background:var(--org)}.a-mo i u.r{background:var(--red)}
+.a-tl{flex:1;position:relative;margin:8px 14px 0;border-radius:24px 24px 0 0;background:rgba(255,255,255,.82);overflow:hidden}
+.a-h{position:absolute;left:0;right:0;border-top:.5px solid var(--hair);font-size:11px;color:var(--mut);padding:0 0 0 12px;font-variant-numeric:tabular-nums}
+.a-h span{position:relative;top:-8px;background:#fafbfd;padding-right:4px}
+.a-ev{position:absolute;left:52px;right:10px;border-radius:9px;padding:4px 10px;font-size:13.5px;font-weight:500;background:#E2EAFD;color:#1C4CCB;border-left:3px solid var(--ac);overflow:hidden;white-space:nowrap;z-index:4}
+.a-ev.r{background:#FBE5E6;color:#B5262B;border-color:var(--red)}
+.a-ev.o{background:#FCEFD9;color:#9A5E00;border-color:var(--org)}
+.a-ev small{display:block;font-size:11.5px;font-weight:400;opacity:.8}
+.a-now{position:absolute;left:44px;right:0;height:1.5px;background:var(--red);z-index:3}
+.a-now::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.a-ghost{flex:1;overflow:hidden;filter:saturate(.8)}
+.a-dim{position:absolute;inset:0;background:rgba(14,20,36,.32);z-index:5}
+.a-sh{position:absolute;z-index:6;left:0;right:0;bottom:262px;background:#fff;border-radius:30px 30px 0 0;padding:20px 20px 14px;box-shadow:0 -10px 40px rgba(14,20,36,.16)}
+.a-sh .nl{font-size:21px;line-height:30px;font-weight:500;margin-bottom:14px;min-height:60px;display:block}
+.a-sh .nl-c{min-height:26px;margin-bottom:14px}
+.a-sh .chip{height:28px;border-radius:9px;font-size:13px;padding:0 10px}
+.a-sh .chip.k-p{background:rgba(229,72,77,.12)}.a-sh .chip.k-l{background:rgba(23,166,115,.13)}.a-sh .chip.k-r{background:rgba(240,154,26,.14)}
+.a-sf{display:flex;align-items:center;gap:20px;color:rgba(18,21,28,.5);font-size:22px}
+.a-send{margin-left:auto;width:44px;height:44px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:21px}
+.a-kb{position:absolute;z-index:7;left:0;right:0;bottom:0;height:262px;background:#D3D6DE;padding:9px 3px 0;display:flex;flex-direction:column;gap:11px;color:#111}
+.a-kb div{display:flex;justify-content:center;gap:5px}
+.a-kb b{height:43px;flex:0 0 33.5px;border-radius:6px;background:#fff;display:grid;place-items:center;font-weight:400;font-size:20px;box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.a-kb b.m{background:#ADB2BD;font-size:14px;flex:0 0 42px}
+.a-kb b.s{flex:1;font-size:15px}
+.a-kb b.g{flex:0 0 88px;font-size:15px;background:var(--ac);color:#fff}
+</style>
+<div class="stage">
+<header class="head"><i>A</i><b>琉璃</b><p>系统原生的玻璃层次，最接近 TickTick，也最好落地。</p></header>
+
+<div class="mac" id="a-mac">
+  <aside class="a-side">
+    <div class="tl"><b></b><b></b><b></b></div>
+    <div class="a-sr"><svg class="i"><use href="#search"/></svg>搜索</div>
+    <a class="l on"><svg class="i"><use href="#sun"/></svg>今天<em>6</em></a>
+    <a class="l"><svg class="i"><use href="#rise"/></svg>明天<em>3</em></a>
+    <a class="l"><svg class="i"><use href="#week"/></svg>最近 7 天<em>14</em></a>
+    <a class="l"><svg class="i"><use href="#inbox"/></svg>收件箱<em>4</em></a>
+    <div class="a-vw">
+      <a href="#a-cal"><svg class="i"><use href="#cal"/></svg>日历</a><a><svg class="i"><use href="#matrix"/></svg>四象限</a><a><svg class="i"><use href="#timer"/></svg>专注</a><a><svg class="i"><use href="#habit"/></svg>习惯</a>
+    </div>
+    <h6>清单</h6>
+    <a class="l"><i class="a-dot" style="background:#2F6BFF"></i>工作<em>12</em></a>
+    <a class="l"><i class="a-dot" style="background:#17A673"></i>生活<em>7</em></a>
+    <a class="l"><i class="a-dot" style="background:#F09A1A"></i>学习<em>3</em></a>
+    <a class="l"><i class="a-dot" style="background:#E5484D"></i>京都旅行<em>6</em></a>
+    <h6>标签</h6>
+    <a class="l"><svg class="i"><use href="#tag"/></svg>财务<em>2</em></a>
+    <a class="l"><svg class="i"><use href="#tag"/></svg>电话<em>1</em></a>
+    <a class="l"><svg class="i"><use href="#tag"/></svg>等回复<em>5</em></a>
+  </aside>
+
+  <div class="a-main">
+    <div class="a-mh"><h1>今天<small>11月5日 周四</small></h1><span class="a-gb"><svg class="i"><use href="#sort"/></svg></span><span class="a-gb"><svg class="i"><use href="#more"/></svg></span></div>
+    <div class="qa a-qa" data-target="a-mlist"><svg class="i"><use href="#plus"/></svg><div class="nl"><div class="nl-m"></div><textarea rows="1" placeholder="添加任务"></textarea></div><div class="nl-c"></div></div>
+    <div class="a-ls" id="a-mpane">
+      <div class="a-g red">已过期</div>
+      <div class="t p2 over" data-note="这个月的账单还没付，到期后第 3 天会停机。"><button class="ck"></button><span class="tt">续交宽带费</span><span class="x a-tg">生活</span><span class="tm">昨天</span></div>
+      <div class="a-g">今天</div>
+      <div id="a-mlist">
+      <div class="t" data-note="议程：上周发布复盘、Q4 路线图确认。"><button class="ck"></button><span class="tt">产品周会</span><span class="x a-tg">工作</span><span class="tm">09:30</span></div>
+      <div class="t p1" data-note="财务周五要汇总，先发初稿。"><button class="ck"></button><span class="tt">Q4 预算发给财务</span><span class="x a-tg">财务</span><span class="tm">11:00</span></div>
+      <div class="t p1 sel" data-note="重点是首屏，三秒内要说清楚能替用户省什么。" data-sub="首屏标题再短一点*|定价表对齐新方案*|客户案例换成三个新的|FAQ 补退款条款|给法务过一遍"><button class="ck"></button><span class="tt">改完发布页文案</span><span class="x a-sb">2/5</span><span class="tm">14:00</span></div>
+      <div class="t p2" data-note="合同续约的事，先确认付款周期。"><button class="ck"></button><span class="tt">给老周回电话</span><span class="x a-tg">电话</span><span class="tm">16:30</span></div>
+      <div class="t p3" data-note="小区南门快递柜。"><button class="ck"></button><span class="tt">取快递</span><span class="tm">18:00</span></div>
+      <div class="t" data-note="读到分税制那一节，做点笔记。"><button class="ck"></button><span class="tt">读《置身事内》第三章</span><span class="tm">21:00</span></div>
+      </div>
+      <div class="a-g">已完成</div>
+      <div class="t done" data-note="配速 5:40。"><button class="ck"></button><span class="tt">晨跑 5 公里</span><span class="tm">07:00</span></div>
+    </div>
+  </div>
+
+  <div class="a-dt" id="a-detail">
+    <div class="a-dh"><button class="ck"></button><span class="a-dd d-tm">今天 14:00</span><svg class="i"><use href="#repeat"/></svg><svg class="i"><use href="#bell"/></svg><svg class="i" style="color:#E5484D;fill:#E5484D"><use href="#flag"/></svg></div>
+    <div class="d-tt">改完发布页文案</div>
+    <div class="d-sub"></div>
+    <div class="d-no"></div>
+    <div class="a-df"><i class="a-dot" style="background:#2F6BFF;margin:0"></i>工作<svg class="i" style="margin-left:10px;font-size:15px"><use href="#timer"/></svg>2/4<button class="a-go"><svg class="i"><use href="#play"/></svg>开始专注</button></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="ph" id="a-today"><div class="scr">
+    <div class="sb"></div>
+    <div class="a-tt"><h1>今天</h1><span class="a-gb"><svg class="i"><use href="#more"/></svg></span></div>
+    <div class="a-g red" style="padding:2px 28px 6px">已过期</div>
+    <div class="a-card">
+      <div class="t p2 over"><button class="ck"></button><span class="tt">续交宽带费</span><span class="tm">昨天</span></div>
+    </div>
+    <div class="a-g" style="padding:2px 28px 6px">11月5日 周四</div>
+    <div class="a-card" id="a-plist">
+      <div class="t"><button class="ck"></button><span class="tt">产品周会</span><span class="tm">09:30</span></div>
+      <div class="t p1"><button class="ck"></button><span class="tt">Q4 预算发给财务</span><span class="tm">11:00</span></div>
+      <div class="t p1"><button class="ck"></button><span class="tt">改完发布页文案</span><span class="x a-sb">2/5</span><span class="tm">14:00</span></div>
+      <div class="t p2"><button class="ck"></button><span class="tt">给老周回电话</span><span class="tm">16:30</span></div>
+      <div class="t p3"><button class="ck"></button><span class="tt">取快递</span><span class="tm">18:00</span></div>
+      <div class="t"><button class="ck"></button><span class="tt">读《置身事内》第三章</span><span class="tm">21:00</span></div>
+      <div class="t done"><button class="ck"></button><span class="tt">晨跑 5 公里</span><span class="tm">07:00</span></div>
+    </div>
+    <div class="a-tabs"><a class="on" href="#a-today"><svg class="i"><use href="#sun"/></svg>今天</a><a href="#a-cal"><svg class="i"><use href="#cal"/></svg>日历</a><a><svg class="i"><use href="#matrix"/></svg>四象限</a><a><svg class="i"><use href="#timer"/></svg>专注</a></div>
+    <a class="a-fab" href="#a-add"><svg class="i"><use href="#plus"/></svg></a>
+  </div></div>
+
+  <div class="ph" id="a-cal"><div class="scr">
+    <div class="sb"></div>
+    <div class="a-tt" style="padding-bottom:8px"><h1>11月</h1><span class="a-gb"><svg class="i"><use href="#search"/></svg></span></div>
+    <div class="a-wk"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="a-mo" id="a-mo"></div>
+    <div class="a-tl" id="a-tl"></div>
+    <div class="a-tabs"><a href="#a-today"><svg class="i"><use href="#sun"/></svg>今天</a><a class="on" href="#a-cal"><svg class="i"><use href="#cal"/></svg>日历</a><a><svg class="i"><use href="#matrix"/></svg>四象限</a><a><svg class="i"><use href="#timer"/></svg>专注</a></div>
+    <a class="a-fab" href="#a-add"><svg class="i"><use href="#plus"/></svg></a>
+  </div></div>
+
+  <div class="ph" id="a-add"><div class="scr">
+    <div class="sb"></div>
+    <div class="a-tt"><h1>今天</h1></div>
+    <div class="a-ghost" id="a-ghost"></div>
+    <div class="a-dim"></div>
+    <div class="qa a-sh" style="display:block" data-target="a-plist" data-jump="a-today">
+      <div class="nl" style="flex:none"><div class="nl-m"></div><textarea rows="2" placeholder="添加任务" data-v="明天下午3点 跟设计过首页 !高 #工作"></textarea></div>
+      <div class="nl-c"></div>
+      <div class="a-sf"><svg class="i"><use href="#cal"/></svg><svg class="i"><use href="#flag"/></svg><svg class="i"><use href="#tag"/></svg><svg class="i"><use href="#mic"/></svg><button class="a-send" data-send><svg class="i"><use href="#up"/></svg></button></div>
+    </div>
+    <div class="a-kb" id="a-kb"></div>
+  </div></div>
+</div>
+</div>
+</section>
+<section class="dir B" id="b">
+<style>
+.B{--bg:#0B0C0E;--p1:#141518;--ink:#ECEAE4;--mut:rgba(236,234,228,.46);--hair:rgba(236,234,228,.1);--ac:#D2FF3C;background:#050506;color:var(--ink);font-feature-settings:"tnum"}
+.B .mac{border-radius:18px;background:var(--bg);box-shadow:0 0 0 1px rgba(255,255,255,.09),0 40px 100px rgba(0,0,0,.7);display:grid;grid-template-columns:68px 1fr 430px}
+.b-rail{border-right:1px solid var(--hair);padding:16px 0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.b-rail .tl{transform:scale(.8);gap:6px;margin-bottom:22px}
+.b-rail .tl b{background:#3A3B40;box-shadow:none}
+.b-rail a{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px;color:var(--mut)}
+.b-rail a:hover{color:var(--ink)}
+.b-rail a.on{background:var(--ac);color:#0B0C0E}
+.b-c{position:relative;display:grid;place-items:center}
+.b-top{position:absolute;left:32px;top:26px;display:flex;align-items:baseline;gap:12px;font-size:15px;color:var(--mut)}
+.b-top b{font-size:26px;font-weight:300;color:var(--ink)}
+.b-d{position:relative;width:740px;height:740px}
+.b-d svg{width:100%;height:100%;display:block;overflow:visible}
+.b-mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.b-mid b{font-size:112px;font-weight:200;letter-spacing:-.03em;line-height:1}
+.b-mid p{font-size:21px;margin-top:12px;font-weight:400}
+.b-mid em{color:var(--ac);font-size:15px;margin-top:6px}
+.b-s{border-left:1px solid var(--hair);padding:22px 26px;display:flex;flex-direction:column;overflow:hidden}
+.b-qa{min-height:46px;border-radius:12px;background:var(--p1);padding:11px 14px;font-size:15px;line-height:24px;box-shadow:inset 0 0 0 1px var(--hair)}
+.b-qa>svg{font-size:17px;color:var(--ac)}
+.B .k-d{color:var(--ac)}.B .k-p{color:#FF7A59}.B .k-l{color:#7CC8FF}.B .k-r{color:#E6B8FF}
+.B .chip{background:rgba(255,255,255,.08);font-size:12px}
+.b-h{font-size:13px;color:var(--mut);padding:26px 0 8px;display:flex;justify-content:space-between}
+.B .t{display:flex;align-items:center;gap:14px;min-height:46px;font-size:15.5px;border-bottom:1px solid var(--hair)}
+.B .tm{width:48px;flex:none;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}
+.B .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.B .ck{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(236,234,228,.32);transition:.15s}
+.B .p1 .ck{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.B .t.done{opacity:.4}
+.B .t.done .ck{background:var(--ink);box-shadow:none}
+.B .t.done .tt{text-decoration:line-through}
+.B .t.now{color:var(--ac)}
+.B .t.now .tm{color:var(--ac)}
+.B .t.now .ck{box-shadow:inset 0 0 0 1.5px var(--ac)}
+.B .t.hot{background:rgba(255,255,255,.05)}
+.b-u{display:flex;align-items:center;gap:10px;min-height:46px;font-size:15.5px;border-bottom:1px solid var(--hair);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.b-u svg{font-size:16px;color:var(--mut)}
+.b-u:hover{color:var(--ac)}
+.b-ghost{position:fixed;z-index:99;pointer-events:none;background:var(--ac);color:#0B0C0E;font-size:14px;font-weight:500;padding:7px 12px;border-radius:9px;transform:translate(12px,12px);white-space:nowrap;font-family:-apple-system,"PingFang SC",sans-serif}
+
+.B .scr{background:var(--bg);color:var(--ink)}
+.b-pd{position:relative;width:366px;height:366px;margin:0 auto;flex:none}
+.b-pd svg{width:100%;height:100%;display:block;overflow:visible}
+.b-pd .b-mid b{font-size:62px}
+.b-pd .b-mid p{font-size:15px;margin-top:6px}
+.b-pd .b-mid em{font-size:12.5px;margin-top:3px}
+.b-pl{padding:8px 22px 0}
+.b-pl .t{min-height:50px;font-size:16px}
+.b-bar{position:absolute;left:16px;right:16px;bottom:24px;height:60px;display:flex;align-items:center;gap:8px;z-index:9}
+.b-bar nav{flex:1;height:60px;border-radius:30px;background:#1A1B1F;display:flex;padding:5px;box-shadow:inset 0 0 0 1px var(--hair)}
+.b-bar nav a{flex:1;border-radius:25px;display:grid;place-items:center;font-size:14px;color:var(--mut)}
+.b-bar nav a.on{background:var(--ink);color:#0B0C0E;font-weight:500}
+.b-bar>a{width:60px;height:60px;border-radius:50%;background:var(--ac);color:#0B0C0E;display:grid;place-items:center;font-size:26px}
+.b-pt{padding:10px 24px 12px;display:flex;justify-content:space-between;align-items:baseline}
+.b-pt h1{font-size:30px;font-weight:300;letter-spacing:.01em}
+.b-pt span{color:var(--mut);font-size:14px}
+.b-w{display:flex;align-items:center;gap:16px;padding:0 22px;height:92px;border-bottom:1px solid var(--hair)}
+.b-w .ring{width:72px;height:72px;flex:none;position:relative}
+.b-w .ring svg{width:100%;height:100%;display:block}
+.b-w .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:19px;font-weight:300}
+.b-w h5{font-size:14px;font-weight:400;color:var(--mut);margin-bottom:3px}
+.b-w p{font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:250px}
+.b-w.today h5,.b-w.today .ring b{color:var(--ac)}
+.b-w.past{opacity:.58}
+.b-fr{position:relative;width:340px;height:340px;margin:44px auto 0}
+.b-fr svg{width:100%;height:100%;transform:rotate(-90deg)}
+.b-fr b{position:absolute;inset:0;display:grid;place-items:center;font-size:84px;font-weight:200;letter-spacing:-.02em}
+.b-ft{text-align:center;padding:30px 30px 0}
+.b-ft h3{font-size:21px;font-weight:400}
+.b-ft i{display:flex;justify-content:center;gap:7px;margin-top:14px}
+.b-ft i u{width:9px;height:9px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--mut)}
+.b-ft i u.on{background:var(--ac);box-shadow:none}
+.b-go{display:block;width:150px;height:60px;border-radius:30px;background:var(--ac);color:#0B0C0E;font-size:17px;font-weight:500;margin:36px auto 0}
+.b-go.run{background:none;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+</style>
+<div class="stage">
+<header class="head"><i>B</i><b>表盘</b><p>一天就是一圈，把任务拖到表盘上就排好了时间。</p></header>
+
+<div class="mac" id="b-mac">
+  <div class="b-rail">
+    <div class="tl"><b></b><b></b><b></b></div>
+    <a class="on"><svg class="i"><use href="#sun"/></svg></a>
+    <a href="#b-week"><svg class="i"><use href="#week"/></svg></a>
+    <a><svg class="i"><use href="#matrix"/></svg></a>
+    <a href="#b-focus"><svg class="i"><use href="#timer"/></svg></a>
+    <a><svg class="i"><use href="#habit"/></svg></a>
+    <a><svg class="i"><use href="#inbox"/></svg></a>
+  </div>
+  <div class="b-c">
+    <div class="b-top"><b>11月5日</b>周四</div>
+    <div class="b-d"><svg id="b-dial"></svg><div class="b-mid"><b>09:41</b><p>产品周会</p><em>还剩 49 分</em></div></div>
+  </div>
+  <div class="b-s">
+    <div class="qa b-qa" data-target="b-mlist"><svg class="i"><use href="#plus"/></svg><div class="nl"><div class="nl-m"></div><textarea rows="1" placeholder="添加任务"></textarea></div><div class="nl-c"></div></div>
+    <div class="b-h"><span>今天</span></div>
+    <div id="b-mlist">
+      <div class="t done" data-a="晨跑"><span class="tm">07:00</span><span class="tt">晨跑 5 公里</span><button class="ck"></button></div>
+      <div class="t now" data-a="周会"><span class="tm">09:30</span><span class="tt">产品周会</span><button class="ck"></button></div>
+      <div class="t p1" data-a="预算"><span class="tm">11:00</span><span class="tt">Q4 预算发给财务</span><button class="ck"></button></div>
+      <div class="t p1" data-a="文案"><span class="tm">14:00</span><span class="tt">改完发布页文案</span><button class="ck"></button></div>
+      <div class="t" data-a="老周"><span class="tm">16:30</span><span class="tt">给老周回电话</span><button class="ck"></button></div>
+      <div class="t" data-a="快递"><span class="tm">18:00</span><span class="tt">取快递</span><button class="ck"></button></div>
+      <div class="t" data-a="读书"><span class="tm">21:00</span><span class="tt">读《置身事内》第三章</span><button class="ck"></button></div>
+    </div>
+    <div class="b-h"><span>未排期</span></div>
+    <div id="b-un">
+      <div class="b-u" data-n="续交宽带费" data-a="宽带"><svg class="i"><use href="#grip"/></svg>续交宽带费</div>
+      <div class="b-u" data-n="订京都机票" data-a="机票"><svg class="i"><use href="#grip"/></svg>订京都机票</div>
+      <div class="b-u" data-n="预约年度体检" data-a="体检"><svg class="i"><use href="#grip"/></svg>预约年度体检</div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="ph" id="b-today"><div class="scr">
+    <div class="sb"></div>
+    <div class="b-pd"><svg id="b-pdial"></svg><div class="b-mid"><b>09:41</b><p>产品周会</p><em>还剩 49 分</em></div></div>
+    <div class="b-pl" id="b-plist">
+      <div class="t p1"><span class="tm">11:00</span><span class="tt">Q4 预算发给财务</span><button class="ck"></button></div>
+      <div class="t p1"><span class="tm">14:00</span><span class="tt">改完发布页文案</span><button class="ck"></button></div>
+      <div class="t"><span class="tm">16:30</span><span class="tt">给老周回电话</span><button class="ck"></button></div>
+      <div class="t"><span class="tm">18:00</span><span class="tt">取快递</span><button class="ck"></button></div>
+      <div class="t"><span class="tm">21:00</span><span class="tt">读《置身事内》第三章</span><button class="ck"></button></div>
+    </div>
+    <div class="b-bar"><nav><a class="on" href="#b-today">今天</a><a href="#b-week">本周</a><a href="#b-focus">专注</a></nav><a><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="b-week"><div class="scr">
+    <div class="sb"></div>
+    <div class="b-pt"><h1>本周</h1><span>11月2日 – 8日</span></div>
+    <div id="b-wk"></div>
+    <div class="b-bar"><nav><a href="#b-today">今天</a><a class="on" href="#b-week">本周</a><a href="#b-focus">专注</a></nav><a><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="b-focus"><div class="scr">
+    <div class="sb"></div>
+    <div class="b-fr"><svg viewBox="-170 -170 340 340"><circle r="158" fill="none" stroke="#1C1E22" stroke-width="10"/><circle id="b-fp" r="158" fill="none" stroke="#D2FF3C" stroke-width="10" stroke-dasharray="992.7" stroke-dashoffset="0"/></svg><b id="b-ft">25:00</b></div>
+    <div class="b-ft"><h3>改完发布页文案</h3><i><u class="on"></u><u class="on"></u><u></u><u></u></i></div>
+    <button class="b-go" id="b-go">开始</button>
+    <div class="b-bar"><nav><a href="#b-today">今天</a><a href="#b-week">本周</a><a class="on" href="#b-focus">专注</a></nav><a><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+</div>
+</div>
+</section>
+<section class="dir C" id="c">
+<style>
+.C{--paper:#EDF2E2;--paper2:#E2E9D5;--rule:#A9C4A6;--ink:#1D2B24;--mut:#5F7566;--red:#C22F1D;--cloth:#1E3429;--song:"Songti SC","STSong",serif;--mono:"Berkeley Mono",ui-monospace,"SF Mono",Menlo,monospace;--ac:#C22F1D;background:#14241C;color:#EDF2E2;font-family:var(--song)}
+.C .head b{font-weight:900}
+.C .mac{border-radius:12px;display:flex;background:var(--paper);color:var(--ink);box-shadow:0 40px 90px rgba(0,0,0,.55)}
+.c-bd{width:84px;flex:none;background:var(--cloth);padding:15px 16px;position:relative}
+.c-bd::after{content:"";position:absolute;right:13px;top:0;bottom:0;border-right:1.5px dashed rgba(237,242,226,.28)}
+.c-bd .tl{gap:6px;transform:scale(.84);transform-origin:left top}
+.c-pg{flex:1;min-width:0;display:flex;flex-direction:column;padding:26px 34px 0 32px}
+.c-hd{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;padding-bottom:18px}
+.c-hd>span{font-family:var(--mono);font-size:13px;color:var(--mut)}
+.c-hd h1{font-size:36px;font-weight:900;letter-spacing:.42em;padding:0 0 6px .42em;border-bottom:4px double var(--ink)}
+.c-tb{border-top:1.5px solid var(--ink);border-left:1px solid var(--rule);border-right:1px solid var(--rule)}
+.c-r{display:grid;grid-template-columns:54px 96px 1fr 92px 112px 84px 56px;height:38px;align-items:stretch;border-bottom:1px solid var(--rule);font-size:16px}
+.c-r>*{display:flex;align-items:center;padding:0 12px;border-left:1px solid var(--rule);min-width:0;white-space:nowrap;overflow:hidden}
+.c-r>:first-child{border-left:0;justify-content:center}
+.c-r .n,.c-r .tm,.c-r .tp{font-family:var(--mono);font-size:13px;color:var(--mut)}
+.c-r>:last-child{justify-content:center;padding:0}
+.c-h{background:var(--paper2);height:34px;font-size:13px;font-weight:700;color:var(--ink);border-bottom:1.5px solid var(--ink)}
+.c-h>*{justify-content:center}
+.C .ck{width:24px;height:24px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--rule);background-position:center;background-size:26px;background-repeat:no-repeat}
+.C .ck:hover{box-shadow:inset 0 0 0 1px var(--red)}
+.C .t.done .ck{box-shadow:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 13c2.4 1.6 4 3.8 5.6 7C11 13.4 15.6 7.6 22 3' fill='none' stroke='%23C22F1D' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E")}
+.C .t.done .tt{color:var(--mut);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+.C .t.over .tt,.C .t.over .tm,.C .t.over .n{color:var(--red)}
+.C .p1 .tt{font-weight:700}
+.C .pm{color:var(--red);font-family:var(--mono);font-weight:700;margin-left:8px;font-size:14px}
+.c-sub{font-size:14.5px}
+.c-sub .tt{padding-left:30px;color:#3C4F44}
+.c-tot{height:42px;border-bottom:4px double var(--ink);border-top:1.5px solid var(--ink);font-weight:700;background:var(--paper2)}
+.c-tot .tp{color:var(--ink);font-weight:700}
+.c-blk{height:38px;border-bottom:1px solid var(--rule)}
+.c-qa{margin:auto -34px 0 -32px;padding:0 34px 0 32px;height:64px;background:var(--cloth);color:var(--paper);font-family:var(--mono);font-size:15px;line-height:24px;--mut:rgba(237,242,226,.5);--ac:#FFD6A0}
+.c-qa>b{font-family:var(--song);font-weight:900;font-size:16px;letter-spacing:.1em}
+.C .k-d{color:#FFD6A0}.C .k-p{color:#FF8E7A}.C .k-l{color:#A8E6B8}.C .k-r{color:#BFD8FF}
+.c-qa .chip{background:rgba(237,242,226,.1);font-family:var(--mono);border-radius:3px}
+.c-tabs{width:52px;flex:none;background:var(--paper2);box-shadow:inset 1px 0 0 var(--rule);padding-top:34px;display:flex;flex-direction:column;gap:3px}
+.c-tabs a{writing-mode:vertical-rl;height:72px;display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:.2em;border-radius:0 8px 8px 0;background:var(--c);color:var(--ink);font-weight:700;margin-right:6px}
+.c-tabs a.on{background:var(--paper);margin-left:-1px;margin-right:0}
+
+.C .scr{background:var(--paper);color:var(--ink);font-family:var(--song)}
+.c-ph{display:flex;align-items:flex-end;justify-content:space-between;padding:10px 46px 12px 24px;border-bottom:1.5px solid var(--ink);flex:none}
+.c-ph h1{font-size:32px;font-weight:900;letter-spacing:.2em;border-bottom:4px double var(--ink);padding-bottom:2px}
+.c-box{display:flex;font-family:var(--mono);font-size:16px}
+.c-box u{text-decoration:none;width:27px;height:34px;display:grid;place-items:center;border:1px solid var(--rule);border-left-width:0}
+.c-box u:first-child{border-left-width:1px}
+.c-box u:nth-child(3){margin-left:6px;border-left-width:1px}
+.c-pl{position:relative;flex:1;padding-right:34px}
+.c-pl::before{content:"";position:absolute;top:0;bottom:0;left:66px;width:3px;border:solid var(--red);border-width:0 1px;opacity:.55}
+.c-pl .t{height:48px;display:flex;align-items:center;border-bottom:1px solid var(--rule);font-size:17px;padding-right:8px}
+.c-pl .tm{width:66px;flex:none;font-family:var(--mono);font-size:12px;color:var(--mut);text-align:center}
+.c-pl .tt{flex:1;padding-left:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.c-pl .pm{margin-left:5px}
+.c-et{position:absolute;right:0;top:150px;width:30px;display:flex;flex-direction:column;gap:3px;z-index:3}
+.c-et a{writing-mode:vertical-rl;height:58px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--c);border-radius:7px 0 0 7px;font-weight:700;letter-spacing:.1em;box-shadow:-1px 0 0 rgba(29,43,36,.1)}
+.c-et a.on{background:var(--ink);color:var(--paper)}
+.c-ft{position:absolute;left:0;right:0;bottom:0;height:112px;background:var(--paper);border-top:1.5px solid var(--ink);display:flex;align-items:flex-start;padding:16px 24px;font-size:16px;font-weight:700;gap:18px;z-index:4}
+.c-ft span{font-family:var(--mono);font-weight:400;font-size:14px;color:var(--mut);padding-top:1px}
+.c-ft span b{color:var(--ink)}
+.c-add{margin-left:auto;width:58px;height:58px;border-radius:50%;background:var(--red);color:#FFF8F0;display:grid;place-items:center;font-size:26px;margin-top:-6px}
+.c-mt{flex:none;font-family:var(--mono);font-size:13px}
+.c-mr{display:grid;grid-template-columns:62px 48px 1fr 1fr 1fr;height:39px;border-bottom:1px solid var(--rule);align-items:stretch;padding-right:0}
+.c-mr>*{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--rule)}
+.c-mr>:first-child{border-left:0}
+.c-mr.h{background:var(--paper2);font-family:var(--song);font-weight:700;border-bottom:1.5px solid var(--ink);height:34px;font-size:13px}
+.c-mr .pen{color:#99AC9E}
+.c-mr .red{color:var(--red);font-weight:700}
+.c-mr.td{background:#F7EFB4}
+.c-mr.tot{border-top:1.5px solid var(--ink);border-bottom:4px double var(--ink);background:var(--paper2);font-weight:700;height:44px;font-family:var(--mono)}
+.c-fm{padding:0 24px;font-size:16px}
+.c-fi{display:grid;grid-template-columns:62px 1fr;min-height:50px;border-bottom:1px solid var(--rule);align-items:center;font-size:16.5px}
+.c-fi>b{font-size:14px;color:var(--mut);font-weight:400;letter-spacing:.2em}
+.c-fi span{font-family:var(--mono);font-size:15px}
+.c-fi span.red{color:var(--red);font-weight:700}
+.c-fi .nl{font-size:18px;line-height:27px;padding:11px 0}
+.c-fo .nl{font-weight:700}
+.c-fo .nl .k-d{color:var(--red)}.c-fo .nl .k-p{color:var(--red)}.c-fo .nl .k-l{color:#1E7A4A}.c-fo .nl .k-r{color:#2D5DA8}
+.c-stamp{display:block;width:118px;height:118px;border-radius:50%;margin:34px auto 0;color:var(--red);box-shadow:inset 0 0 0 4px var(--red),inset 0 0 0 7px var(--paper),inset 0 0 0 8px var(--red);font-size:34px;font-weight:900;letter-spacing:.06em;transform:rotate(-8deg);font-family:var(--song)}
+.c-stamp:active{transform:rotate(-8deg) scale(.94)}
+</style>
+<div class="stage">
+<header class="head"><i>C</i><b>账本</b><p>每天一页账，做完一笔结一笔。</p></header>
+
+<div class="mac" id="c-mac">
+  <div class="c-bd"><div class="tl"><b></b><b></b><b></b></div></div>
+  <div class="c-pg">
+    <div class="c-hd"><span>2026 年 11 月 5 日 星期四</span><h1>今日账</h1><span style="text-align:right">第 309 页</span></div>
+    <div class="c-tb" id="c-mlist">
+      <div class="c-r c-h"><span>序</span><span>时间</span><span>事项</span><span>清单</span><span>标记</span><span>番茄</span><span>结</span></div>
+      <div class="c-r t over"><span class="n">逾</span><span class="tm">昨天</span><span class="tt">续交宽带费</span><span>生活</span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t done"><span class="n">1</span><span class="tm">07:00</span><span class="tt">晨跑 5 公里</span><span>生活</span><span></span><span class="tp">1/1</span><span><button class="ck"></button></span></div>
+      <div class="c-r t"><span class="n">2</span><span class="tm">09:30</span><span class="tt">产品周会</span><span>工作</span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t p1"><span class="n">3</span><span class="tm">11:00</span><span class="tt">Q4 预算发给财务<em class="pm">!!</em></span><span>工作</span><span>#财务</span><span class="tp">0/1</span><span><button class="ck"></button></span></div>
+      <div class="c-r t p1"><span class="n">4</span><span class="tm">14:00</span><span class="tt">改完发布页文案<em class="pm">!!</em></span><span>工作</span><span></span><span class="tp">2/4</span><span><button class="ck"></button></span></div>
+      <div class="c-r t c-sub done"><span class="n">4.1</span><span class="tm"></span><span class="tt">首屏标题再短一点</span><span></span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t c-sub done"><span class="n">4.2</span><span class="tm"></span><span class="tt">定价表对齐新方案</span><span></span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t c-sub"><span class="n">4.3</span><span class="tm"></span><span class="tt">客户案例换成三个新的</span><span></span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t c-sub"><span class="n">4.4</span><span class="tm"></span><span class="tt">FAQ 补退款条款</span><span></span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t"><span class="n">5</span><span class="tm">16:30</span><span class="tt">给老周回电话<em class="pm">!</em></span><span>工作</span><span>#电话</span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t"><span class="n">6</span><span class="tm">18:00</span><span class="tt">取快递</span><span>生活</span><span></span><span class="tp"></span><span><button class="ck"></button></span></div>
+      <div class="c-r t"><span class="n">7</span><span class="tm">21:00</span><span class="tt">读《置身事内》第三章</span><span>学习</span><span></span><span class="tp">0/2</span><span><button class="ck"></button></span></div>
+      <div class="c-r"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="c-r"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="c-r c-tot"><span></span><span>合计</span><span id="c-sum">8 笔　已结 1　未结 7</span><span></span><span></span><span class="tp">3/8</span><span></span></div>
+    </div>
+    <div class="qa c-qa" data-target="c-mlist"><b>入账</b><div class="nl"><div class="nl-m"></div><textarea rows="1" placeholder="明天下午3点 跟设计过首页 !高 #工作"></textarea></div><div class="nl-c"></div></div>
+  </div>
+  <div class="c-tabs">
+    <a class="on" style="--c:#EDF2E2">今日</a><a style="--c:#F2DFA6">明日</a><a style="--c:#F3CDB9">七日</a><a style="--c:#CFDFEF">收件</a><a style="--c:#BFD9B8">工作</a><a style="--c:#E4D5EA">生活</a><a style="--c:#F2DFA6">学习</a><a href="#c-month" style="--c:#D9D9CB">月结</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="ph" id="c-today"><div class="scr">
+    <div class="sb"></div>
+    <div class="c-ph"><h1>今日账</h1><div class="c-box"><u>1</u><u>1</u><u>0</u><u>5</u></div></div>
+    <div class="c-pl" id="c-plist">
+      <div class="t over"><span class="tm">昨天</span><span class="tt">续交宽带费</span><button class="ck"></button></div>
+      <div class="t done"><span class="tm">07:00</span><span class="tt">晨跑 5 公里</span><button class="ck"></button></div>
+      <div class="t"><span class="tm">09:30</span><span class="tt">产品周会</span><button class="ck"></button></div>
+      <div class="t p1"><span class="tm">11:00</span><span class="tt">Q4 预算发给财务<em class="pm">!!</em></span><button class="ck"></button></div>
+      <div class="t p1"><span class="tm">14:00</span><span class="tt">改完发布页文案<em class="pm">!!</em></span><button class="ck"></button></div>
+      <div class="t"><span class="tm">16:30</span><span class="tt">给老周回电话<em class="pm">!</em></span><button class="ck"></button></div>
+      <div class="t"><span class="tm">18:00</span><span class="tt">取快递</span><button class="ck"></button></div>
+      <div class="t"><span class="tm">21:00</span><span class="tt">读《置身事内》第三章</span><button class="ck"></button></div>
+      <div class="t"></div><div class="t"></div><div class="t"></div><div class="t"></div><div class="t"></div>
+    </div>
+    <div class="c-et"><a class="on" style="--c:#EDF2E2">今日</a><a style="--c:#F2DFA6">明日</a><a style="--c:#F3CDB9">七日</a><a style="--c:#CFDFEF">收件</a><a href="#c-month" style="--c:#D9D9CB">月结</a></div>
+    <div class="c-ft">合计<span><b>8</b> 笔　已结 <b>1</b></span><a class="c-add" href="#c-new"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="c-month"><div class="scr">
+    <div class="sb"></div>
+    <div class="c-ph" style="padding-right:24px"><h1>月结</h1><div class="c-box"><u>1</u><u>1</u></div></div>
+    <div class="c-mt">
+      <div class="c-mr h"><span>日</span><span>周</span><span>笔</span><span>结</span><span>番茄</span></div>
+      <div class="c-mr"><span>01</span><span>日</span><span>3</span><span>3</span><span>2</span></div>
+      <div class="c-mr"><span>02</span><span>一</span><span>7</span><span>7</span><span>5</span></div>
+      <div class="c-mr"><span>03</span><span>二</span><span>6</span><span class="red">5</span><span>4</span></div>
+      <div class="c-mr"><span>04</span><span>三</span><span>8</span><span class="red">6</span><span>6</span></div>
+      <div class="c-mr td"><span>05</span><span>四</span><span>8</span><span>1</span><span>3</span></div>
+      <div class="c-mr"><span>06</span><span>五</span><span class="pen">3</span><span></span><span></span></div>
+      <div class="c-mr"><span>07</span><span>六</span><span class="pen">1</span><span></span><span></span></div>
+      <div class="c-mr"><span>08</span><span>日</span><span class="pen">1</span><span></span><span></span></div>
+      <div class="c-mr"><span>09</span><span>一</span><span class="pen">2</span><span></span><span></span></div>
+      <div class="c-mr"><span>10</span><span>二</span><span></span><span></span><span></span></div>
+      <div class="c-mr"><span>11</span><span>三</span><span></span><span></span><span></span></div>
+      <div class="c-mr"><span>12</span><span>四</span><span class="pen">1</span><span></span><span></span></div>
+      <div class="c-mr"><span>13</span><span>五</span><span></span><span></span><span></span></div>
+      <div class="c-mr"><span>14</span><span>六</span><span class="pen">6</span><span></span><span></span></div>
+      <div class="c-mr tot"><span style="grid-column:span 2;font-family:var(--song)">合计</span><span>32</span><span>22</span><span>20</span></div>
+    </div>
+    <div class="c-et" style="top:auto;bottom:40px;flex-direction:row;width:auto;right:18px"><a href="#c-today" style="writing-mode:horizontal-tb;height:44px;width:84px;border-radius:7px;--c:#F2DFA6">回今日</a></div>
+  </div></div>
+
+  <div class="ph" id="c-new"><div class="scr">
+    <div class="sb"></div>
+    <div class="c-ph" style="padding-right:24px"><h1>入账</h1><div class="c-box"><u>1</u><u>1</u><u>0</u><u>5</u></div></div>
+    <div class="c-fm c-fo qa" style="display:block" data-target="c-plist" data-jump="c-today" data-form>
+      <div class="c-fi" style="grid-template-columns:1fr"><div class="nl" style="flex:none"><div class="nl-m"></div><textarea rows="2" placeholder="事项" data-v="明天下午3点 跟设计过首页 !高 #工作"></textarea></div></div>
+      <div class="c-fi"><b>事项</b><span data-f="title" style="font-family:var(--song);font-size:17px"></span></div>
+      <div class="c-fi"><b>日期</b><span data-f="date"></span></div>
+      <div class="c-fi"><b>时间</b><span data-f="time"></span></div>
+      <div class="c-fi"><b>等级</b><span data-f="prio" class="red"></span></div>
+      <div class="c-fi"><b>清单</b><span data-f="list" style="font-family:var(--song);font-size:17px"></span></div>
+      <div class="c-fi"><b>重复</b><span data-f="rep"></span></div>
+      <button class="c-stamp" data-send>入账</button>
+    </div>
+  </div></div>
+</div>
+</div>
+</section>
+<section class="dir D" id="d">
+<style>
+.D{--ch:#DAD8D1;--ch2:#E8E6E0;--ink:#1B1B1A;--mut:#77756E;--or:#FF5A14;--lcd:#141512;--lcdt:#F1EEE6;--ac:#FF5A14;--mono:"Berkeley Mono",ui-monospace,"SF Mono",Menlo,monospace;background:#BEBCB4;color:var(--ink)}
+.D .mac{border-radius:24px;background:linear-gradient(#E2E0DA,#D6D4CD);box-shadow:0 40px 80px rgba(50,48,40,.45),0 2px 0 #fff inset,0 -2px 0 rgba(0,0,0,.12) inset;padding:0 18px 18px;display:flex;flex-direction:column}
+.d-hd{height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 6px}
+.d-hd .tl b{box-shadow:inset 0 1px 2px rgba(0,0,0,.4),0 1px 0 rgba(255,255,255,.7)}
+.d-grill{width:150px;height:18px;background-image:radial-gradient(circle,#8B897F 1.6px,transparent 2px);background-size:9px 9px}
+.d-bd{flex:1;display:grid;grid-template-columns:268px 1fr 330px;gap:18px;min-height:0}
+.d-lf{display:flex;flex-direction:column;gap:14px;min-height:0}
+.d-ks{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:10px;min-height:0}
+.d-mh{flex:none;padding:12px 14px;border-radius:14px;background:rgba(0,0,0,.05);box-shadow:inset 0 1px 3px rgba(0,0,0,.14),0 1px 0 rgba(255,255,255,.7)}
+.d-mh div{display:grid;grid-template-columns:36px 1fr;align-items:center;height:27px;font-size:13px}
+.d-mh .d-dots{gap:3px}
+.d-k{border-radius:13px;background:linear-gradient(#F3F1EC,#DFDDD6);box-shadow:0 3px 0 #ACAAA1,0 6px 12px rgba(50,48,40,.25),inset 0 1px 0 #fff;padding:12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;font-size:16px;font-weight:500;transition:transform .08s,box-shadow .08s}
+.d-k em{font-family:var(--mono);font-size:13px;color:var(--mut);align-self:flex-end}
+.d-k:active,.d-k.on{transform:translateY(2px);box-shadow:0 1px 0 #ACAAA1,0 2px 5px rgba(50,48,40,.25),inset 0 1px 0 rgba(255,255,255,.5)}
+.d-k.on{background:linear-gradient(#FF6B2B,#F7500A);color:#fff}
+.d-k.on em{color:rgba(255,255,255,.8)}
+.d-qa{margin-top:auto;min-height:56px;border-top:1px solid rgba(241,238,230,.14);padding-top:16px;font-size:17px;line-height:26px;--mut:rgba(241,238,230,.42)}
+.d-qa>svg{font-size:20px;color:var(--or)}
+.D .k-d{color:var(--or)}.D .k-p{color:#FFB08A}.D .k-l{color:#9FD8FF}.D .k-r{color:#E0C6FF}
+.d-qa .chip{background:rgba(241,238,230,.1)}
+.d-sc{border-radius:16px;background:var(--lcd);box-shadow:inset 0 3px 10px #000,0 1px 0 rgba(255,255,255,.75);color:var(--lcdt);padding:22px 28px;display:flex;flex-direction:column;min-height:0}
+.d-st{display:flex;align-items:center;justify-content:space-between;height:60px;flex:none;border-bottom:1px solid rgba(241,238,230,.14);margin-bottom:4px}
+.d-st h2{font-size:30px;font-weight:500}
+.seg{display:inline-block;vertical-align:top}
+.seg svg{display:block;height:100%;width:auto;overflow:visible}
+.D .t{display:flex;align-items:center;gap:18px;min-height:62px;font-size:18px;border-bottom:1px solid rgba(241,238,230,.08)}
+.D .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .2s}
+.D .tm{font-family:var(--mono);font-size:15px;color:var(--or)}
+.D .ck{width:48px;height:26px;border-radius:6px;background:#2C2D2A;box-shadow:inset 0 2px 4px #000,0 1px 0 rgba(255,255,255,.08);transition:background .15s}
+.D .ck::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:4px;background:linear-gradient(#EFEDE7,#BDBBB3);box-shadow:0 1px 3px rgba(0,0,0,.6);transition:left .16s cubic-bezier(.3,1.4,.6,1)}
+.D .t.done .ck{background:var(--or)}
+.D .t.done .ck::after{left:25px}
+.D .t.done .tt{opacity:.38}
+.D .t.done .tm{opacity:.38}
+.D .p1 .tt{font-weight:600}
+.D .pd{width:7px;height:7px;border-radius:50%;background:var(--or);flex:none;margin-left:-8px;box-shadow:0 0 6px var(--or)}
+.d-rt{display:flex;flex-direction:column;align-items:center;gap:16px;min-height:0}
+.d-lc{width:100%;height:96px;border-radius:14px;background:var(--lcd);box-shadow:inset 0 3px 10px #000,0 1px 0 rgba(255,255,255,.75);display:grid;place-items:center;padding:14px;flex:none}
+.d-lc .seg{height:58px}
+.knob{--s:262px;width:calc(var(--s) + 56px);height:calc(var(--s) + 56px);position:relative;flex:none;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.knob .kt{position:absolute;inset:0}
+.knob .kt svg{width:100%;height:100%;display:block;overflow:visible}
+.knob .kb{position:absolute;left:28px;top:28px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle at 50% 50%,#EDEBE5 0 56%,transparent 56.4%),repeating-conic-gradient(#C7C5BC 0 3deg,#F0EEE8 3deg 6deg);box-shadow:0 12px 26px rgba(50,48,40,.45),0 2px 0 rgba(255,255,255,.6) inset,0 -3px 6px rgba(0,0,0,.2) inset;display:block}
+.knob .kb::before{content:"";position:absolute;inset:22%;border-radius:50%;background:linear-gradient(145deg,#F7F5F0,#D6D4CC);box-shadow:0 1px 1px #fff inset,0 -1px 2px rgba(0,0,0,.15) inset}
+.knob .kb i{position:absolute;left:50%;top:7%;width:6px;height:27%;margin-left:-3px;border-radius:3px;background:var(--or)}
+.d-kk{display:flex;gap:12px;align-items:center;width:100%;margin-top:auto}
+.d-gob{flex:1;height:60px;border-radius:14px;background:linear-gradient(#FF6B2B,#F7500A);color:#fff;font-size:18px;font-weight:600;box-shadow:0 3px 0 #BC3C04,0 6px 12px rgba(120,40,0,.4),inset 0 1px 0 rgba(255,255,255,.4);transition:.08s}
+.d-gob:active{transform:translateY(2px);box-shadow:0 1px 0 #BC3C04}
+.d-gob.run{background:linear-gradient(#3A3B37,#21221F);box-shadow:0 3px 0 #000,inset 0 1px 0 rgba(255,255,255,.2)}
+.d-led{display:flex;gap:7px;justify-content:center}
+.d-led u{width:11px;height:11px;border-radius:50%;background:#B6B4AB;box-shadow:inset 0 1px 2px rgba(0,0,0,.4),0 1px 0 rgba(255,255,255,.7)}
+.d-led u.on{background:var(--or);box-shadow:0 0 8px var(--or),inset 0 1px 1px rgba(255,255,255,.6)}
+
+.D .scr{background:linear-gradient(#E2E0DA,#D2D0C9);color:var(--ink)}
+.d-pl{margin:6px 14px 10px;height:112px;flex:none;border-radius:18px;background:var(--lcd);box-shadow:inset 0 3px 10px #000,0 1px 0 rgba(255,255,255,.8);color:var(--lcdt);display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.d-pl .seg{height:62px}
+.d-pl small{display:block;font-size:13px;color:rgba(241,238,230,.6);margin-bottom:6px;text-align:right}
+.d-pl .seg.sm{height:34px}
+.d-rows{padding:0 14px}
+.D .scr .t{min-height:0;height:68px;margin-bottom:8px;padding:0 14px;border-radius:12px;background:linear-gradient(#F0EEE9,#E4E2DB);box-shadow:0 1px 0 #fff inset,0 2px 0 #B5B3AA;font-size:15.5px;gap:12px;border:0}
+.D .scr .tm{font-size:13px;font-weight:500}
+.D .scr .ck{width:40px;height:24px;background:#1E1F1C}
+.D .scr .ck::after{left:3px;top:3px;width:18px;height:18px}
+.D .scr .t.done .ck::after{left:19px}
+.D .scr .pd{margin-left:-4px}
+.d-bar{position:absolute;left:14px;right:14px;bottom:26px;height:62px;display:grid;grid-template-columns:1fr 1fr 1fr 62px;gap:8px}
+.d-bar a{border-radius:12px;background:linear-gradient(#F3F1EC,#DFDDD6);box-shadow:0 3px 0 #A9A79E,0 5px 8px rgba(50,48,40,.2),inset 0 1px 0 #fff;display:grid;place-items:center;font-size:15px;font-weight:500}
+.d-bar a.on{transform:translateY(2px);box-shadow:0 1px 0 #A9A79E,inset 0 2px 4px rgba(0,0,0,.14);background:#D1CFC7}
+.d-bar a.add{background:linear-gradient(#FF6B2B,#F7500A);color:#fff;font-size:26px;box-shadow:0 3px 0 #BC3C04,inset 0 1px 0 rgba(255,255,255,.4);border-radius:50%}
+.d-pf{margin:6px 14px 0;height:146px;flex:none;border-radius:18px;background:var(--lcd);box-shadow:inset 0 3px 10px #000,0 1px 0 rgba(255,255,255,.8);color:var(--lcdt);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.d-pf .seg{height:72px}
+.d-pf p{font-size:14px;color:rgba(241,238,230,.72)}
+.D .scr .knob{--s:280px;margin:26px auto 4px}
+.d-pb{display:flex;align-items:center;gap:14px;padding:0 18px;margin-top:10px}
+.d-pb .d-gob{height:64px;font-size:19px}
+.d-hb{margin:0 14px 10px;padding:17px 16px 19px;border-radius:14px;background:linear-gradient(#F0EEE9,#E4E2DB);box-shadow:0 1px 0 #fff inset,0 2px 0 #B5B3AA}
+.d-hb h4{display:flex;justify-content:space-between;align-items:center;font-size:15.5px;font-weight:500;margin-bottom:10px}
+.d-hb h4 .seg{height:20px}
+.d-dots{display:grid;grid-template-columns:repeat(14,1fr);gap:5px}
+.d-dots u{aspect-ratio:1;border-radius:50%;background:#BEBCB3;box-shadow:inset 0 1px 2px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.7);cursor:pointer;transition:.15s}
+.d-dots u.on{background:var(--or);box-shadow:0 0 6px rgba(255,90,20,.8),inset 0 1px 1px rgba(255,255,255,.5)}
+.d-dots u.td{outline:1.5px solid var(--ink);outline-offset:1.5px}
+</style>
+<div class="stage">
+<header class="head"><i>D</i><b>机器</b><p>像一台实体小设备，清单是按键，番茄钟是能拧的旋钮。</p></header>
+
+<div class="mac" id="d-mac">
+  <div class="d-hd"><div class="tl"><b></b><b></b><b></b></div><div class="d-grill"></div></div>
+  <div class="d-bd">
+    <div class="d-lf"><div class="d-ks" id="d-ks"></div><div class="d-mh" id="d-mh"></div></div>
+    <div class="d-sc"><div class="d-st"><h2 id="d-title">今天</h2><span class="seg" id="d-cnt" style="height:34px"></span></div><div id="d-list"></div><div class="qa d-qa" data-target="d-list"><svg class="i"><use href="#plus"/></svg><div class="nl"><div class="nl-m"></div><textarea rows="1" placeholder="添加任务"></textarea></div><div class="nl-c"></div></div></div>
+    <div class="d-rt">
+      <div class="d-lc"><span class="seg" data-lcd="m"></span></div>
+      <div class="knob" data-knob="m"><div class="kt"></div><div class="kb"><i></i></div></div>
+      <div class="d-led"><u class="on"></u><u class="on"></u><u class="on"></u><u></u><u></u><u></u><u></u><u></u></div>
+      <div class="d-kk"><button class="d-gob" data-start="m">开始</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="ph" id="d-today"><div class="scr">
+    <div class="sb"></div>
+    <div class="d-pl"><span class="seg" data-seg="11-05" data-c="#FF5A14"></span><div><small>周四</small><span class="seg sm" data-seg="1-7" data-c="#F1EEE6"></span></div></div>
+    <div class="d-rows" id="d-plist">
+      <div class="t done"><button class="ck"></button><span class="tt">晨跑 5 公里</span><span class="tm">07:00</span></div>
+      <div class="t"><button class="ck"></button><span class="tt">产品周会</span><span class="tm">09:30</span></div>
+      <div class="t p1"><button class="ck"></button><i class="pd"></i><span class="tt">Q4 预算发给财务</span><span class="tm">11:00</span></div>
+      <div class="t p1"><button class="ck"></button><i class="pd"></i><span class="tt">改完发布页文案</span><span class="tm">14:00</span></div>
+      <div class="t"><button class="ck"></button><span class="tt">给老周回电话</span><span class="tm">16:30</span></div>
+      <div class="t"><button class="ck"></button><span class="tt">取快递</span><span class="tm">18:00</span></div>
+      <div class="t"><button class="ck"></button><span class="tt">读《置身事内》第三章</span><span class="tm">21:00</span></div>
+    </div>
+    <div class="d-bar"><a class="on" href="#d-today">今天</a><a href="#d-focus">专注</a><a href="#d-habit">习惯</a><a class="add"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="d-focus"><div class="scr">
+    <div class="sb"></div>
+    <div class="d-pf"><span class="seg" data-lcd="p"></span><p>改完发布页文案</p></div>
+    <div class="knob" data-knob="p"><div class="kt"></div><div class="kb"><i></i></div></div>
+    <div class="d-pb"><div class="d-led" style="flex:none;gap:6px"><u class="on"></u><u class="on"></u><u></u><u></u></div><button class="d-gob" data-start="p">开始</button></div>
+    <div class="d-bar"><a href="#d-today">今天</a><a class="on" href="#d-focus">专注</a><a href="#d-habit">习惯</a><a class="add"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="d-habit"><div class="scr">
+    <div class="sb"></div>
+    <div class="d-pl"><span class="seg" data-seg="21" data-c="#FF5A14"></span><div><small>今日</small><span class="seg sm" id="d-hc" data-seg="2-5" data-c="#F1EEE6"></span></div></div>
+    <div id="d-hbs"></div>
+    <div class="d-bar"><a href="#d-today">今天</a><a href="#d-focus">专注</a><a class="on" href="#d-habit">习惯</a><a class="add"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+</div>
+</div>
+</section>
+<section class="dir E" id="e">
+<style>
+.E{--ve:#FF4A1C;--ye:#FFD21E;--co:#1A2BE6;--bo:#F3EFE5;--bk:#0D0D0D;--num:"HelveticaNeue-CondensedBlack","Helvetica Neue Condensed Black","Helvetica Neue",Impact,"Lantinghei SC",sans-serif;--zh:"Lantinghei SC","PingFang SC",sans-serif;background:#0D0D0D;color:#F3EFE5;font-family:var(--zh)}
+.E .head b{font-weight:900}
+.E .mac{border-radius:12px;display:flex;background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 40px 90px rgba(0,0,0,.6);color:var(--bk)}
+.e-p{flex:0 0 112px;position:relative;overflow:hidden;background:var(--c);color:var(--f,var(--bk));transition:flex-basis .42s cubic-bezier(.7,0,.2,1);cursor:pointer}
+.e-p.on{flex-basis:1024px;cursor:default}
+.e-sp{position:absolute;left:0;top:0;width:112px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:52px 0 26px;transition:opacity .2s}
+.e-sp b{writing-mode:vertical-rl;font-size:54px;font-weight:900;letter-spacing:.06em;line-height:1}
+.e-sp em{font-family:var(--num);font-size:68px;line-height:.9}
+.e-p.on .e-sp{opacity:0;pointer-events:none}
+.e-in{position:absolute;left:0;top:0;bottom:0;width:1024px;display:grid;grid-template-columns:430px 1fr;opacity:0;pointer-events:none;transition:opacity .22s}
+.e-p.on .e-in{opacity:1;pointer-events:auto;transition-delay:.2s}
+.e-big{position:relative;overflow:hidden}
+.e-big b{position:absolute;left:18px;top:6px;font-family:var(--num);font-size:620px;line-height:.88;letter-spacing:-.03em}
+.e-big b.sm{font-size:400px;top:30px}
+.e-big p{position:absolute;left:30px;bottom:26px;font-size:44px;font-weight:900;line-height:1.12}
+.e-big p.w{font-size:42px}
+.e-ls{padding:50px 34px 24px 6px;display:flex;flex-direction:column;min-height:0}
+.E .t{display:flex;align-items:baseline;gap:14px;cursor:pointer;font-weight:800;letter-spacing:-.005em;line-height:1.14;padding:7px 0;border-top:3px solid var(--f,var(--bk))}
+.E .tm{font-family:var(--num);font-size:19px;width:50px;flex:none;letter-spacing:.01em}
+.E .tt{flex:1;min-width:0}
+.E .t{font-size:23px}
+.E .t.p1{font-size:54px;letter-spacing:-.02em}
+.E .t.p2{font-size:34px}
+.E .ck{display:none}
+.E .t.done{opacity:.42}
+.E .t.done .tt{text-decoration:line-through;text-decoration-thickness:.1em}
+.e-qa{margin-top:auto;border-top:6px solid var(--f,var(--bk));padding-top:14px;font-size:24px;line-height:32px;font-weight:800;--mut:color-mix(in srgb,var(--f,var(--bk)) 55%,transparent);--ac:var(--f,var(--bk))}
+.e-qa>svg{font-size:28px;stroke-width:3}
+.E .k-d,.E .k-p,.E .k-l,.E .k-r{background:var(--f,var(--bk));color:var(--c,#fff)}
+.E .chip{background:var(--f,var(--bk));color:var(--c,#fff);border-radius:0;font-weight:700;font-size:13px}
+.e-tl{position:absolute;z-index:6;left:18px;top:17px}
+.e-tl.tl b{background:rgba(0,0,0,.28);box-shadow:none}
+
+.E .scr{color:var(--f,var(--bk));background:var(--c);font-family:var(--zh)}
+.E .scr::after{background:#F3EFE5;opacity:1}
+.e-hero{position:absolute;left:0;top:44px;right:0;height:318px;overflow:hidden;pointer-events:none}
+.e-hero b{position:absolute;left:14px;top:-12px;font-family:var(--num);font-size:356px;line-height:.9;letter-spacing:-.03em}
+.e-hero p{position:absolute;right:22px;top:18px;text-align:right;font-size:30px;font-weight:900;line-height:1.1}
+.e-pl{position:absolute;left:18px;right:18px;top:362px;bottom:96px;overflow:hidden}
+.e-pl .t{padding:7px 0;font-size:19px}
+.e-pl .t.p1{font-size:31px}
+.e-pl .t.p2{font-size:25px}
+.e-pl .tm{font-size:15px;width:38px}
+.e-bar{position:absolute;z-index:8;left:0;right:0;bottom:0;height:88px;background:var(--bk);color:#8C8C8C;display:flex;align-items:flex-start;gap:20px;padding:15px 18px 0;font-size:18px;font-weight:900}
+.e-bar a.on{color:#F3EFE5}
+.e-bar a.add{margin-left:auto;width:44px;height:44px;background:var(--ve);color:var(--bk);display:grid;place-items:center;font-size:26px;margin-top:-6px;border-radius:50%}
+.e-bar a.add svg{stroke-width:3}
+.e-mx{position:absolute;inset:0 0 88px;display:grid;grid-template:1fr 1fr/1fr 1fr}
+.e-q{background:var(--c);color:var(--f,var(--bk));padding:14px 14px;overflow:hidden;position:relative}
+.e-q:first-child{padding-top:50px}
+.e-q:nth-child(2){padding-top:50px}
+.e-q h4{font-size:20px;font-weight:900;line-height:1.1;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.e-q h4 em{font-family:var(--num);font-size:86px;line-height:.82}
+.e-q .t{font-size:17px;padding:8px 0;border-top-width:2px;line-height:1.2}
+.e-wk{position:absolute;inset:0 0 88px;display:flex;flex-direction:column}
+.e-b{flex:1;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--c);color:var(--f,var(--bk));min-height:0}
+.e-b em{font-family:var(--num);font-size:68px;line-height:1;width:58px;flex:none}
+.e-b span{font-size:13px;font-weight:800;width:30px;flex:none}
+.e-b p{font-size:17px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e-b u{text-decoration:none;font-family:var(--num);font-size:26px}
+.e-b.td{flex:2.2;align-items:flex-start;padding-top:12px}
+.e-b.td em{font-size:150px;width:110px;line-height:.86}
+.e-b.td div{flex:1;min-width:0}
+.e-b.td span{display:block;width:auto;font-size:17px;margin-bottom:5px}
+.e-b.td p{font-size:17px;line-height:1.34}
+.e-b.td p:first-of-type{font-size:25px;line-height:1.16;white-space:normal}
+.e-b.first{padding-top:34px;flex:1.4}
+.e-b.past{--c:#161616;--f:#7C7C7C}
+</style>
+<div class="stage">
+<header class="head"><i>E</i><b>海报</b><p>优先级决定字号，清单占满整屏颜色。</p></header>
+
+<div class="mac" id="e-mac">
+  <div class="tl e-tl"><b></b><b></b><b></b></div>
+  <div class="e-p on" style="--c:#FF4A1C;--f:#0D0D0D">
+    <div class="e-sp"><b>今天</b><em>6</em></div>
+    <div class="e-in"><div class="e-big"><b>5</b><p>周四<br>11月</p></div>
+      <div class="e-ls"><div id="e-mlist">
+        <div class="t p1"><span class="tt">Q4 预算发给财务</span><span class="tm">11:00</span></div>
+        <div class="t p1"><span class="tt">改完发布页文案</span><span class="tm">14:00</span></div>
+        <div class="t p2"><span class="tt">给老周回电话</span><span class="tm">16:30</span></div>
+        <div class="t p2"><span class="tt">续交宽带费</span><span class="tm">昨天</span></div>
+        <div class="t"><span class="tt">产品周会</span><span class="tm">09:30</span></div>
+        <div class="t"><span class="tt">取快递</span><span class="tm">18:00</span></div>
+        <div class="t"><span class="tt">读《置身事内》第三章</span><span class="tm">21:00</span></div>
+        <div class="t done"><span class="tt">晨跑 5 公里</span><span class="tm">07:00</span></div>
+      </div>
+      <div class="qa e-qa" data-target="e-mlist"><svg class="i"><use href="#plus"/></svg><div class="nl"><div class="nl-m"></div><textarea rows="1" placeholder="添加"></textarea></div><div class="nl-c"></div></div>
+      </div></div>
+  </div>
+  <div class="e-p" style="--c:#FFD21E;--f:#0D0D0D">
+    <div class="e-sp"><b>明天</b><em>3</em></div>
+    <div class="e-in"><div class="e-big"><b>6</b><p>周五<br>11月</p></div><div class="e-ls">
+      <div class="t p1"><span class="tt">跟设计过首页</span><span class="tm">15:00</span></div>
+      <div class="t p2"><span class="tt">交报销单</span><span class="tm">09:00</span></div>
+      <div class="t"><span class="tt">买猫粮</span></div>
+    </div></div>
+  </div>
+  <div class="e-p" style="--c:#1A2BE6;--f:#F3EFE5">
+    <div class="e-sp"><b>七天</b><em>14</em></div>
+    <div class="e-in"><div class="e-big"><b class="sm">14</b><p class="w">11月<br>5–11日</p></div><div class="e-ls">
+      <div class="t p1"><span class="tt">京都行程定稿</span><span class="tm">周日</span></div>
+      <div class="t p2"><span class="tt">带猫打疫苗</span><span class="tm">周六</span></div>
+      <div class="t p2"><span class="tt">季度复盘提纲</span><span class="tm">周一</span></div>
+      <div class="t"><span class="tt">还信用卡</span><span class="tm">周二</span></div>
+      <div class="t"><span class="tt">预约年度体检</span><span class="tm">周三</span></div>
+    </div></div>
+  </div>
+  <div class="e-p" style="--c:#F3EFE5;--f:#0D0D0D">
+    <div class="e-sp"><b>收件</b><em>4</em></div>
+    <div class="e-in"><div class="e-big"><b>4</b><p class="w">收件箱</p></div><div class="e-ls">
+      <div class="t p2"><span class="tt">订京都机票</span></div>
+      <div class="t"><span class="tt">退掉没用的订阅</span></div>
+      <div class="t"><span class="tt">整理照片</span></div>
+      <div class="t"><span class="tt">看看新路由器</span></div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="ph" id="e-today"><div class="scr" style="--c:#FF4A1C;--f:#0D0D0D">
+    <div class="sb"></div>
+    <div class="e-hero"><b>5</b><p>周四<br>11月</p></div>
+    <div class="e-pl">
+      <div class="t p1"><span class="tt">Q4 预算发给财务</span><span class="tm">11:00</span></div>
+      <div class="t p1"><span class="tt">改完发布页文案</span><span class="tm">14:00</span></div>
+      <div class="t p2"><span class="tt">给老周回电话</span><span class="tm">16:30</span></div>
+      <div class="t p2"><span class="tt">续交宽带费</span><span class="tm">昨天</span></div>
+      <div class="t"><span class="tt">产品周会</span><span class="tm">09:30</span></div>
+      <div class="t"><span class="tt">取快递</span><span class="tm">18:00</span></div>
+      <div class="t"><span class="tt">读《置身事内》第三章</span><span class="tm">21:00</span></div>
+    </div>
+    <div class="e-bar"><a class="on" href="#e-today">今天</a><a href="#e-matrix">四象限</a><a href="#e-week">本周</a><a class="add"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="e-matrix"><div class="scr" style="--c:#0D0D0D;--f:#F3EFE5">
+    <div class="sb" style="position:absolute;left:0;right:0;top:0;color:#0D0D0D"></div>
+    <div class="e-mx">
+      <div class="e-q" style="--c:#FF4A1C;--f:#0D0D0D"><h4>重要<br>紧急<em>3</em></h4><div class="t"><span class="tt">Q4 预算发给财务</span></div><div class="t"><span class="tt">改完发布页文案</span></div><div class="t"><span class="tt">续交宽带费</span></div></div>
+      <div class="e-q" style="--c:#FFD21E;--f:#0D0D0D"><h4>重要<br>不急<em>3</em></h4><div class="t"><span class="tt">读《置身事内》</span></div><div class="t"><span class="tt">订京都机票</span></div><div class="t"><span class="tt">预约年度体检</span></div></div>
+      <div class="e-q" style="--c:#1A2BE6;--f:#F3EFE5"><h4>紧急<br>不重要<em>2</em></h4><div class="t"><span class="tt">给老周回电话</span></div><div class="t"><span class="tt">取快递</span></div></div>
+      <div class="e-q" style="--c:#F3EFE5;--f:#0D0D0D"><h4>都不<em>2</em></h4><div class="t"><span class="tt">整理照片</span></div><div class="t"><span class="tt">退掉没用的订阅</span></div></div>
+    </div>
+    <div class="e-bar"><a href="#e-today">今天</a><a class="on" href="#e-matrix">四象限</a><a href="#e-week">本周</a><a class="add"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+
+  <div class="ph" id="e-week"><div class="scr" style="--c:#0D0D0D;--f:#F3EFE5">
+    <div class="sb" style="position:absolute;left:0;right:0;top:0;color:#F3EFE5"></div>
+    <div class="e-wk">
+      <div class="e-b first past"><em>2</em><span>周一</span><p>全部做完</p><u>7</u></div>
+      <div class="e-b past"><em>3</em><span>周二</span><p>全部做完</p><u>6</u></div>
+      <div class="e-b past"><em>4</em><span>周三</span><p>还差 2 件</p><u>8</u></div>
+      <div class="e-b td" style="--c:#FF4A1C;--f:#0D0D0D"><em>5</em><div><span>周四 · 7</span><p>Q4 预算发给财务</p><p>改完发布页文案</p><p>给老周回电话</p></div></div>
+      <div class="e-b" style="--c:#FFD21E;--f:#0D0D0D"><em>6</em><span>周五</span><p>跟设计过首页</p><u>3</u></div>
+      <div class="e-b" style="--c:#1A2BE6;--f:#F3EFE5"><em>7</em><span>周六</span><p>带猫打疫苗</p><u>1</u></div>
+      <div class="e-b" style="--c:#F3EFE5;--f:#0D0D0D"><em>8</em><span>周日</span><p>京都行程定稿</p><u>1</u></div>
+    </div>
+    <div class="e-bar"><a href="#e-today">今天</a><a href="#e-matrix">四象限</a><a class="on" href="#e-week">本周</a><a class="add"><svg class="i"><use href="#plus"/></svg></a></div>
+  </div></div>
+</div>
+</div>
+</section>
+<section class="dir F" id="f">
+<style>
+.F{--pa:#F6F5EF;--ink:#17150F;--mut:#7F7B6E;--ci:#CF2A1B;--hr:#D9D6CA;--song:"Songti SC","STSong",serif;--kai:"Kaiti SC","STKaiti",serif;background:#D5D3CA;color:var(--ink);font-family:var(--song)}
+.F .head b{font-weight:900}
+.F .mac{border-radius:12px;background:var(--pa);box-shadow:0 40px 90px rgba(60,55,40,.4);display:grid;grid-template-columns:560px 1fr}
+.F .mac>.tl{position:absolute;left:18px;top:17px;z-index:20;pointer-events:none}
+.F .mac>.tl b{background:rgba(255,244,230,.55);box-shadow:none}
+.f-pad{position:relative;overflow:hidden;background:#E9E7DD;user-select:none;-webkit-user-select:none}
+.f-page{position:absolute;inset:0;background:var(--pa);display:flex;flex-direction:column;cursor:pointer;transition:transform .55s cubic-bezier(.5,0,.8,.5),opacity .55s;transform-origin:30% 0}
+.f-page.torn{transform:translate(-40px,110%) rotate(-14deg);opacity:0;pointer-events:none}
+.f-bind{height:46px;flex:none;background:var(--ci);color:#FFF4E6;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;letter-spacing:.34em;position:relative}
+.f-perf{height:14px;flex:none;background-image:radial-gradient(circle,#D5D3CA 2.2px,transparent 2.8px);background-size:13px 14px}
+.f-body{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0}
+.f-num{font-weight:900;font-size:420px;line-height:.92;letter-spacing:-.04em;color:var(--ink)}
+.f-num.red{color:var(--ci)}
+.f-v{position:absolute;top:40px;writing-mode:vertical-rl;font-size:30px;font-weight:700;letter-spacing:.18em}
+.f-v.l{left:32px;color:var(--ci)}
+.f-v.r{right:32px}
+.f-foot{height:96px;flex:none;border-top:2px solid var(--ink);margin:0 30px;display:grid;grid-template-columns:1fr 1fr;align-items:center;font-size:18px}
+.f-foot span:last-child{text-align:right;font-family:var(--kai);font-size:21px}
+.f-foot span b{color:var(--ci);font-weight:400}
+.f-rt{border-left:1px solid var(--hr);padding:34px 42px 26px;display:flex;flex-direction:column;min-height:0;box-shadow:inset 18px 0 22px -18px rgba(60,55,40,.22)}
+.f-sec{display:grid;grid-template-columns:76px 1fr;gap:22px}
+.f-seal{width:76px;height:76px;display:grid;place-items:center;font-size:50px;font-weight:900;color:#FFF4E6;background:var(--ci);border-radius:6px;line-height:1}
+.f-seal.bk{background:var(--ink)}
+.F .t{display:flex;align-items:center;gap:14px;min-height:50px;font-size:19px;border-bottom:1px solid var(--hr);cursor:default}
+.F .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.F .tm{font-family:var(--kai);font-size:17px;color:var(--mut)}
+.F .ck{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--mut);display:grid;place-items:center;font-size:17px;line-height:1;font-weight:900;color:transparent;transition:transform .16s}
+.F .ck::after{content:"讫"}
+.F .t.done .ck{background:var(--ci);box-shadow:none;color:#FFF4E6;transform:rotate(-10deg) scale(1.08)}
+.F .t.done .tt{color:var(--mut)}
+.F .t.over .tt,.F .t.over .tm{color:var(--ci)}
+.F .p1 .tt{font-weight:700}
+.F .no .ck{border-radius:4px}
+.F .no .ck::after{content:"破"}
+.F .no.done .ck{background:var(--ink)}
+.f-sep{height:22px;flex:none}
+.f-ri{margin-top:auto;display:flex;align-items:center;gap:18px;padding-top:16px}
+.f-st{width:64px;height:64px;border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--mut);font-size:17px;display:grid;place-items:center;color:var(--ink);transition:.18s;flex:none}
+.f-st.on{background:var(--ci);box-shadow:inset 0 0 0 3px var(--ci),inset 0 0 0 4.5px #FFF4E6;color:#FFF4E6;font-weight:900;transform:rotate(-8deg)}
+.f-xg{margin-left:auto;height:64px;padding:0 24px;background:var(--ink);color:#F6F5EF;font-size:18px;font-weight:700;letter-spacing:.2em;border-radius:6px;display:grid;place-items:center}
+
+.F .scr{background:var(--pa);color:var(--ink);font-family:var(--song)}
+.F .scr .f-pad{height:300px;flex:none;margin-top:-54px;padding:0}
+.F .scr .f-page{padding-top:54px;background:var(--pa)}
+.F .scr .f-bind{height:34px;font-size:13px}
+.F .scr .f-perf{height:10px;background-size:11px 10px;background-image:radial-gradient(circle,#D5D3CA 1.8px,transparent 2.3px)}
+.F .scr .f-num{font-size:190px}
+.F .scr .f-v{font-size:20px;top:20px}
+.F .scr .f-v.l{left:22px}.F .scr .f-v.r{right:22px}
+.f-pl{padding:12px 20px 0;display:grid;grid-template-columns:48px 1fr;gap:12px;flex:none}
+.f-pl .f-seal{width:48px;height:48px;font-size:32px;border-radius:5px}
+.F .scr .t{min-height:39px;font-size:16.5px}
+.F .scr .tm{font-size:15px}
+.F .scr .ck{width:23px;height:23px;font-size:15px}
+.f-bar{position:absolute;left:0;right:0;bottom:0;height:82px;background:var(--pa);border-top:2px solid var(--ink);display:grid;grid-template-columns:1fr 1fr 1fr;padding-top:12px;text-align:center;font-size:17px;font-weight:700;letter-spacing:.14em;z-index:9;color:var(--mut)}
+.f-bar a.on{color:var(--ci)}
+.f-mh{display:flex;align-items:flex-end;justify-content:space-between;padding:10px 22px 14px;border-bottom:2px solid var(--ink);flex:none}
+.f-mh h1{font-size:50px;font-weight:900;line-height:1}
+.f-mh span{font-size:15px;color:var(--mut);font-family:var(--kai)}
+.f-wk,.f-gr{display:grid;grid-template-columns:repeat(7,1fr);padding:0 8px;text-align:center}
+.f-wk{font-size:13px;font-weight:700;padding-top:10px;padding-bottom:4px}
+.f-wk span:first-child,.f-wk span:last-child{color:var(--ci)}
+.f-gr>div{height:92px;position:relative;display:flex;flex-direction:column;align-items:center;padding-top:7px;border-top:1px solid var(--hr)}
+.f-gr b{font-size:28px;font-weight:900;line-height:1.14;position:relative;z-index:1}
+.f-gr small{font-size:12px;color:var(--mut);margin-top:1px;font-family:var(--song);position:relative;z-index:1}
+.f-gr .we b{color:var(--ci)}
+.f-gr .jq small{color:var(--ci);font-weight:700}
+.f-gr .ok small{visibility:hidden}
+.f-gr .ok::after{content:"讫";position:absolute;left:50%;top:44px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:var(--ci);color:#FFF4E6;display:grid;place-items:center;font-size:16px;font-weight:900;transform:rotate(-10deg);z-index:2}
+.f-gr .td{background:var(--ink)}
+.f-gr .td b,.f-gr .td small{color:#F6F5EF}
+.f-terms{padding:14px 22px;display:flex;gap:26px;font-size:17px;border-top:2px solid var(--ink);margin-top:2px}
+.f-terms b{color:var(--ci);font-weight:900;margin-right:6px}
+.f-ins{background:#14120D;color:#EDE7D6}
+.f-ins .scr{background:#14120D;color:#EDE7D6}
+.F .scr.dark{background:#14120D;color:#EDE7D6}
+.f-it{position:absolute;left:0;right:0;top:64px;text-align:center;font-size:19px;color:#C2BAA2;padding:0 40px}
+.f-svg{position:absolute;left:0;top:0;width:390px;height:844px}
+.f-vt{position:absolute;left:30px;top:150px;writing-mode:vertical-rl;font-size:44px;font-weight:900;letter-spacing:.2em;color:#EDE7D6}
+.f-tr{position:absolute;right:32px;top:150px;writing-mode:vertical-rl;font-size:24px;letter-spacing:.2em;color:#C2BAA2;font-family:var(--kai)}
+.f-lit{position:absolute;left:50%;bottom:100px;width:84px;height:84px;margin-left:-42px;border-radius:8px;background:var(--ci);color:#FFF4E6;font-size:30px;font-weight:900;z-index:9;font-family:var(--song)}
+.F .scr.dark .f-bar{background:#14120D;border-color:#3A3527}
+@keyframes sm1{0%{stroke-dashoffset:480;opacity:0}12%{opacity:.5}70%{opacity:.26}100%{stroke-dashoffset:0;opacity:0}}
+.f-smoke path{fill:none;stroke:#D9D2BE;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:90 390;opacity:0}
+.lit .f-smoke path{animation:sm1 5.5s linear infinite}
+.lit .f-smoke path:nth-child(2){animation-delay:1.8s;stroke-width:1.1}
+.lit .f-smoke path:nth-child(3){animation-delay:3.6s;stroke-width:2}
+</style>
+<div class="stage">
+<header class="head"><i>F</i><b>黄历</b><p>撕一页过一天，今日宜、今日忌，一炷香专注。</p></header>
+
+<div class="mac" id="f-mac">
+  <div class="tl"><b></b><b></b><b></b></div>
+  <div class="f-pad" data-pad="m" data-y="f-my" data-j="f-mj" data-tall></div>
+  <div class="f-rt">
+    <div class="f-sec"><div class="f-seal">宜</div><div id="f-my"></div></div>
+    <div class="f-sep"></div>
+    <div class="f-sec"><div class="f-seal bk">忌</div><div id="f-mj"></div></div>
+    <div class="f-ri"><button class="f-st on">早起</button><button class="f-st on">跑步</button><button class="f-st">阅读</button><button class="f-st">喝水</button><a class="f-xg" href="#f-xiang">一炷香</a></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="ph" id="f-today"><div class="scr">
+    <div class="sb" style="z-index:40"></div>
+    <div class="f-pad" data-pad="p" data-y="f-py" data-j="f-pj"></div>
+    <div class="f-pl"><div class="f-seal">宜</div><div id="f-py"></div></div>
+    <div class="f-pl"><div class="f-seal bk">忌</div><div id="f-pj"></div></div>
+    <div class="f-bar"><a class="on" href="#f-today">今日</a><a href="#f-cal">月历</a><a href="#f-xiang">一炷香</a></div>
+  </div></div>
+
+  <div class="ph" id="f-cal"><div class="scr">
+    <div class="sb"></div>
+    <div class="f-mh"><h1>十一月</h1><span>丙午年</span></div>
+    <div class="f-wk"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="f-gr" id="f-gr"></div>
+    <div class="f-terms"><span><b>立冬</b>7日</span><span><b>小雪</b>22日</span></div>
+    <div class="f-bar"><a href="#f-today">今日</a><a class="on" href="#f-cal">月历</a><a href="#f-xiang">一炷香</a></div>
+  </div></div>
+
+  <div class="ph" id="f-xiang"><div class="scr dark" id="f-xs">
+    <div class="sb"></div>
+    <div class="f-it">改完发布页文案</div>
+    <div class="f-vt">一炷香</div>
+    <div class="f-tr" id="f-tr">二十五分</div>
+    <svg class="f-svg" viewBox="0 0 390 844">
+      <g class="f-smoke"><path d="M195 190c-14-30 18-52 4-82s-22-44-4-78-8-54 2-86"/><path d="M195 190c12-26-14-50 2-78s20-48 2-80 10-52-4-88"/><path d="M195 190c-6-34 16-42 0-78s-16-48 4-82-14-48 0-84"/></g>
+      <line id="f-st" x1="195" x2="195" y1="190" y2="512" stroke="#B48A52" stroke-width="3" stroke-linecap="round"/>
+      <circle id="f-em" cx="195" cy="190" r="3.5" fill="#FF6A2B" opacity="0"/>
+      <path d="M118 516h154l-14 58c-3 11-11 16-22 16h-82c-11 0-19-5-22-16z" fill="#3A3527"/>
+      <path d="M108 508h174v10H108z" fill="#4C4634"/>
+      <path d="M146 590l-8 18h16l6-18zM244 590l8 18h-16l-6-18z" fill="#3A3527"/>
+      <path id="f-ash" d="M165 508q30 -9 60 0z" fill="#8F8970" opacity="0"/>
+    </svg>
+    <button class="f-lit" id="f-lit">点香</button>
+    <div class="f-bar"><a href="#f-today">今日</a><a href="#f-cal">月历</a><a class="on" href="#f-xiang">一炷香</a></div>
+  </div></div>
+</div>
+</div>
+</section>
+<script>
+(function(){
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const only=new URLSearchParams(location.search).get('s');
+if(only){$$('.dir').forEach(d=>{if(d.id!==only)d.remove()});$('#nav').remove()}
+
+/* 舞台缩放 */
+function fit(){document.documentElement.style.setProperty('--z',Math.min(1,(innerWidth-64)/1360))}
+addEventListener('resize',fit);fit();
+
+/* 状态栏 */
+$$('.sb').forEach(s=>{s.innerHTML='<span>9:41</span><span><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx=".8"/><rect x="5" y="5.5" width="3" height="6.5" rx=".8"/><rect x="10" y="3" width="3" height="9" rx=".8"/><rect x="15" y="0" width="3" height="12" rx=".8"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="19" height="8" rx="1.9"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".5"/></svg></span>'});
+
+/* 顶部导航高亮 */
+const navs=$$('#nav a');
+if(navs.length){const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)navs.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id))})},{rootMargin:'-45% 0px -50% 0px'});$$('.dir').forEach(d=>io.observe(d))}
+addEventListener('keydown',e=>{if(e.target.matches('textarea,input')||e.metaKey||e.ctrlKey)return;const i='123456'.indexOf(e.key);if(i>=0&&navs[i])navs[i].click()});
+
+/* 屏间跳转 */
+function jump(id){const el=document.getElementById(id);if(!el)return;el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});if(el.matches('.ph,.mac')){el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1100)}}
+document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(!a)return;const id=a.getAttribute('href').slice(1);const el=document.getElementById(id);if(el&&!el.matches('.dir')){e.preventDefault();jump(id)}});
+
+/* 勾选 */
+document.addEventListener('click',e=>{
+  const ck=e.target.closest('.ck');
+  if(ck){const t=ck.closest('.t');if(t){t.classList.toggle('done');onToggle(t)}e.stopPropagation();return}
+  const ep=e.target.closest('.E .t');
+  if(ep){ep.classList.toggle('done');return}
+  const st=e.target.closest('.f-st');if(st){st.classList.toggle('on');return}
+  const dt=e.target.closest('.d-dots u');if(dt){dt.classList.toggle('on');updHabit();return}
+  const qq=e.target.closest('.qa');if(qq)return;
+  const r=e.target.closest('#a-mpane .t');if(r)selectA(r);
+  const pp=e.target.closest('.e-p');if(pp&&!pp.classList.contains('on')){$$('.e-p').forEach(x=>x.classList.toggle('on',x===pp))}
+});
+function onToggle(t){
+  if(t.closest('.B'))syncDial();
+  if(t.closest('#c-mlist'))sumC();
+  if(t.closest('.d-sc'))cntD();
+}
+
+/* A：详情联动 */
+function selectA(r){
+  $$('#a-mpane .t').forEach(x=>x.classList.toggle('sel',x===r));
+  const d=$('#a-detail');
+  $('.d-tt',d).textContent=$('.tt',r).textContent;
+  const tm=$('.tm',r).textContent;
+  $('.d-tm',d).textContent=(tm==='昨天'?'昨天':'今天 '+tm);
+  $('.d-tm',d).style.color=tm==='昨天'?'#E5484D':'';
+  const c=getComputedStyle(r).getPropertyValue('--c').trim();
+  $('.a-dh .ck',d).style.borderColor=c||'#B2B7C2';
+  const fl=$('.a-dh svg:last-child',d);fl.style.color=c||'rgba(18,21,28,.3)';fl.style.fill=c||'none';
+  $('.d-no',d).textContent=r.dataset.note||'';
+  const sub=(r.dataset.sub||'').split('|').filter(Boolean);
+  $('.d-sub',d).innerHTML=sub.map(s=>{const f=s.endsWith('*');return `<div class="t a-st${f?' done':''}"><button class="ck"></button><span class="tt">${f?s.slice(0,-1):s}</span></div>`}).join('');
+}
+const asel=$('#a-mpane .t.sel');if(asel)selectA(asel);
+
+/* A：月历、时间线、键盘、幽灵列表 */
+const am=$('#a-mo');
+if(am){let h='';const dots={2:'bb',3:'bo',4:'br',5:'rbo',6:'bo',7:'o',9:'b',12:'r',14:'bb',19:'o',23:'b',27:'r'};for(let d=1;d<=30;d++){const w=(d-1)%7;const ds=(dots[d]||'').split('').map(c=>`<u class="${c==='o'?'o':c==='r'?'r':''}"></u>`).join('');h+=`<div class="${d===5?'on':''} ${w===0||w===6?'w':''}"><b>${d}</b><i>${ds}</i></div>`}am.innerHTML=h}
+const tl=$('#a-tl');
+if(tl){let h='';const H=54,T=v=>10+(v-9)*H;for(let i=9;i<=17;i++)h+=`<div class="a-h" style="top:${T(i)}px"><span>${String(i).padStart(2,'0')}:00</span></div>`;
+[[9.5,10.5,'产品周会','09:30 – 10:30',''],[11,11.5,'Q4 预算发给财务','','r'],[14,16,'改完发布页文案','14:00 – 16:00',''],[16.5,16.9,'给老周回电话','','o']].forEach(e=>{h+=`<div class="a-ev ${e[4]}" style="top:${T(e[0])+1}px;height:${(e[1]-e[0])*H-2}px">${e[2]}${e[3]?`<small>${e[3]}</small>`:''}</div>`});
+h+=`<div class="a-now" style="top:${T(9.683)}px"></div>`;tl.innerHTML=h}
+const kb=$('#a-kb');
+if(kb){const R=(s,x='',y='')=>'<div>'+x+s.split('').map(c=>`<b>${c}</b>`).join('')+y+'</div>';kb.innerHTML=R('qwertyuiop')+R('asdfghjkl')+R('zxcvbnm','<b class="m">⇧</b>','<b class="m">⌫</b>')+'<div><b class="m">123</b><b class="m">☺</b><b class="s">空格</b><b class="g">发送</b></div>'}
+
+/* 自然语言快捷添加 */
+const DAY={今天:'11月5日',明天:'11月6日',后天:'11月7日',大后天:'11月8日'};
+const WK='日一二三四五六';
+function nextWd(c,next){const w=WK.indexOf(c==='天'?'日':c);let d=(w-4+7)%7;if(d===0)d=7;if(next)d+=7;const dd=5+d;return dd>30?`12月${dd-30}日`:`11月${dd}日`}
+const RX=/(大后天|今天|明天|后天|下周[一二三四五六日天]|周[一二三四五六日天]|星期[一二三四五六日天]|\d{1,2}月\d{1,2}[日号]?)|((?:早上|上午|中午|下午|晚上|今晚)?\s?\d{1,2}(?:点半|点\d{0,2}分?|:\d{2}))|(每天|每周[一二三四五六日天]?|每月\d{1,2}[日号]?|工作日)|([!！][高中低])|(#[^\s#!！]+)/g;
+function parseNL(v){
+  const r={title:'',date:'',time:'',prio:'',list:'',rep:'',html:''};let last=0,html='',m;RX.lastIndex=0;const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  while((m=RX.exec(v))){html+=esc(v.slice(last,m.index));last=RX.lastIndex;const s=m[0];
+    if(m[1]){const k=m[1];r.date=DAY[k]||(/^下周/.test(k)?nextWd(k.slice(-1),1):/^(周|星期)/.test(k)?nextWd(k.slice(-1)):k.replace('号','日'));html+=`<span class="k-d">${esc(s)}</span>`}
+    else if(m[2]){let t=m[2].replace(/\s/g,''),pm=/下午|晚上|今晚/.test(t);t=t.replace(/早上|上午|中午|下午|晚上|今晚/,'');let h,mi='00';if(t.includes(':')){[h,mi]=t.split(':');h=+h}else{h=parseInt(t);if(/半/.test(t))mi='30';else{const x=t.match(/点(\d{1,2})/);if(x)mi=x[1].padStart(2,'0')}}if(pm&&h<12)h+=12;r.time=String(h).padStart(2,'0')+':'+mi;html+=`<span class="k-d">${esc(s)}</span>`}
+    else if(m[3]){r.rep=m[3];html+=`<span class="k-r">${esc(s)}</span>`}
+    else if(m[4]){r.prio=m[4].slice(1);html+=`<span class="k-p">${esc(s)}</span>`}
+    else if(m[5]){r.list=m[5].slice(1);html+=`<span class="k-l">${esc(s)}</span>`}
+  }
+  html+=esc(v.slice(last));r.html=html;
+  r.title=v.replace(RX,' ').replace(/\s+/g,' ').trim();
+  return r;
+}
+function nlRefresh(q){
+  const ta=$('textarea',q),m=$('.nl-m',q),c=$('.nl-c',q),p=parseNL(ta.value);
+  m.innerHTML=p.html;
+  if(c){let h='';if(p.date||p.time)h+=`<span class="chip k-d">${[p.date,p.time].filter(Boolean).join(' ')}</span>`;if(p.prio)h+=`<span class="chip k-p">${p.prio}优先级</span>`;if(p.list)h+=`<span class="chip k-l">${p.list}</span>`;if(p.rep)h+=`<span class="chip k-r">${p.rep}</span>`;c.innerHTML=h}
+  if(q.hasAttribute('data-form')){$$('[data-f]',q).forEach(f=>f.textContent=p[f.dataset.f]||'')}
+}
+function nlCommit(q){
+  const ta=$('textarea',q),p=parseNL(ta.value);if(!p.title)return;
+  const list=document.getElementById(q.dataset.target);
+  if(list){
+    const rows=$$('.t',list).filter(x=>$('.tt',x)&&!x.classList.contains('c-sub'));
+    const base=rows.find(x=>!x.classList.contains('done')&&!x.classList.contains('over'))||rows[0];
+    if(base){
+      const c=base.cloneNode(true);
+      c.classList.remove('done','sel','over','now','p1','p2','p3','hot');c.classList.add('new');
+      $$('.x,.pm,.pd',c).forEach(x=>x.remove());
+      $('.tt',c).textContent=p.title;
+      const tm=$('.tm',c);if(tm){const lb=p.date===''||p.date==='11月5日'?(p.time||''):p.date.replace('11月','11/').replace('日','');tm.textContent=lb}
+      const pc={高:'p1',中:'p2',低:'p3'}[p.prio];if(pc)c.classList.add(pc);
+      if(p.prio==='高'&&q.closest('.C')){const em=document.createElement('em');em.className='pm';em.textContent='!!';$('.tt',c).appendChild(em)}
+      delete c.dataset.sub;c.dataset.note='';
+      list.insertBefore(c,base);
+      if(c.classList.contains('c-r')){const bl=$$('.c-r',list).find(x=>!x.classList.contains('t')&&!x.classList.contains('c-h')&&!x.classList.contains('c-tot'));if(bl)bl.remove();c.children[3].textContent=p.list||'收件';c.children[4].textContent='';c.children[5].textContent='';let i=0,j=0;$$('.t',list).forEach(x=>{const n=x.children[0];if(x.classList.contains('over'))return;if(x.classList.contains('c-sub')){j++;n.textContent=i+'.'+j}else{i++;j=0;n.textContent=i}})}
+    }
+    if(q.closest('.C')&&list.id==='c-mlist')sumC();
+    if(q.closest('.d-sc'))cntD();
+  }
+  ta.value='';nlRefresh(q);
+  if(q.dataset.jump)jump(q.dataset.jump);
+}
+$$('.qa').forEach(q=>{
+  const ta=$('textarea',q);if(!ta)return;
+  if(ta.dataset.v)ta.value=ta.dataset.v;
+  nlRefresh(q);
+  ta.addEventListener('input',()=>nlRefresh(q));
+  ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();nlCommit(q)}});
+  const s=$('[data-send]',q);if(s)s.addEventListener('click',()=>nlCommit(q));
+});
+const gh=$('#a-ghost');if(gh){const c=$('#a-plist').cloneNode(true);c.removeAttribute('id');gh.appendChild(c)}
+
+/* B：表盘 */
+const pol=(r,h)=>{const a=h/24*2*Math.PI-Math.PI/2;return[r*Math.cos(a),r*Math.sin(a)]};
+const arc=(r,s,e)=>{const[a,b]=pol(r,s),[c,d]=pol(r,e);return`M${a.toFixed(2)} ${b.toFixed(2)}A${r} ${r} 0 ${(e-s)>12?1:0} 1 ${c.toFixed(2)} ${d.toFixed(2)}`};
+const BT=[{s:7,e:7.67,n:'晨跑',done:1},{s:9.5,e:10.5,n:'周会',now:1},{s:11,e:11.5,n:'预算',hi:1},{s:14,e:16,n:'文案',hi:1},{s:16.5,e:16.85,n:'老周'},{s:18,e:18.35,n:'快递'},{s:21,e:21.75,n:'读书'}];
+function dial(svg,o){
+  const R=o.R,r=o.r,w=o.w,pad=o.pad||0;let h='';
+  svg.setAttribute('viewBox',`${-R} ${-R} ${2*R} ${2*R}`);
+  h+=`<circle r="${r}" fill="none" stroke="#1B1D21" stroke-width="${w}"/>`;
+  h+=`<path d="${arc(r,23,31)}" fill="none" stroke="#111215" stroke-width="${w}"/>`;
+  if(o.ticks){for(let i=0;i<24;i++){const big=i%3===0,[a,b]=pol(r-w/2-4,i),[c,d]=pol(r-w/2-(big?14:8),i);h+=`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="rgba(236,234,228,${big?.55:.22})" stroke-width="${big?1.5:1}"/>`;if(big){const[x,y]=pol(r-w/2-o.lab,i);h+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="${o.fs}" fill="rgba(236,234,228,.46)" font-weight="300">${i}</text>`}}}
+  (o.tasks||BT).forEach(t=>{const m=Math.max(t.e,t.s+.28),col=t.now?'#D2FF3C':t.done?'#3A3C42':t.hi?'#ECEAE4':'#9B9A95';
+    h+=`<path class="dial-a" data-a="${t.n}" d="${arc(r,t.s+pad,m-pad)}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
+    if(o.labels){const mid=(t.s+m)/2,[x,y]=pol(r+w/2+o.ld,mid),an=x>6?'start':x<-6?'end':'middle';h+=`<text x="${x}" y="${y}" text-anchor="${an}" dominant-baseline="central" font-size="${o.lf}" fill="${t.now?'#D2FF3C':t.done?'rgba(236,234,228,.35)':'#ECEAE4'}">${t.n}</text>`}});
+  if(o.now!==undefined){const[a,b]=pol(r-w/2-5,o.now),[c,d]=pol(r+w/2+5,o.now);h+=`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#D2FF3C" stroke-width="${o.nw||3}" stroke-linecap="round"/>`}
+  if(o.preview){h+=`<path d="${arc(r,o.preview,o.preview+.5)}" fill="none" stroke="#D2FF3C" stroke-width="${w}" opacity=".6"/>`;const[x,y]=pol(r-w/2-o.lab-26,o.preview+.25);const hh=Math.floor(o.preview),mm=String(Math.round((o.preview-hh)*60)).padStart(2,'0');h+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="17" fill="#D2FF3C">${String(hh).padStart(2,'0')}:${mm}</text>`}
+  svg.innerHTML=h;
+}
+let bPrev;
+function drawB(){
+  const m=$('#b-dial'),p=$('#b-pdial');
+  if(m)dial(m,{R:370,r:270,w:38,ticks:1,lab:26,fs:15,now:9.683,labels:1,ld:18,lf:17,nw:3.5,pad:.03,preview:bPrev});
+  if(p)dial(p,{R:183,r:128,w:22,ticks:1,lab:17,fs:10,now:9.683,labels:1,ld:9,lf:12,nw:2.5,pad:.04});
+}
+function syncDial(){$$('#b-mlist .t[data-a]').forEach(t=>{const o=BT.find(x=>x.n===t.dataset.a);if(o){o.done=t.classList.contains('done')?1:0;if(o.done)o.now=0}});drawB()}
+drawB();
+function hookDial(){const d=$('#b-dial');if(!d)return;d.addEventListener('mouseover',e=>{const a=e.target.dataset&&e.target.dataset.a;$$('#b-mlist .t').forEach(t=>t.classList.toggle('hot',!!a&&t.dataset.a===a))});d.addEventListener('mouseleave',()=>$$('#b-mlist .t').forEach(t=>t.classList.remove('hot')))}
+hookDial();
+$$('.b-u').forEach(u=>{u.addEventListener('pointerdown',e=>{
+  e.preventDefault();const g=document.createElement('div');g.className='b-ghost';g.textContent=u.dataset.n;document.body.appendChild(g);
+  const svg=$('#b-dial');const pos=ev=>{g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px';const rc=svg.getBoundingClientRect(),cx=rc.left+rc.width/2,cy=rc.top+rc.height/2,dx=ev.clientX-cx,dy=ev.clientY-cy;if(Math.hypot(dx,dy)<rc.width/2){let a=Math.atan2(dx,-dy);if(a<0)a+=2*Math.PI;bPrev=Math.round(a/(2*Math.PI)*24*4)/4;if(bPrev>=24)bPrev=0}else bPrev=undefined;drawB()};
+  pos(e);
+  const mv=ev=>pos(ev),up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);g.remove();
+    if(bPrev!==undefined){const s=bPrev;BT.push({s,e:s+.5,n:u.dataset.a});const hh=String(Math.floor(s)).padStart(2,'0')+':'+String(Math.round((s%1)*60)).padStart(2,'0');const row=document.createElement('div');row.className='t new';row.dataset.a=u.dataset.a;row.dataset.s=s;row.innerHTML=`<span class="tm">${hh}</span><span class="tt">${u.dataset.n}</span><button class="ck"></button>`;const list=$('#b-mlist');const after=$$('.t',list).find(t=>t.querySelector('.tm').textContent>hh);list.insertBefore(row,after||null);u.remove()}
+    bPrev=undefined;drawB()};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);
+})});
+const wk=$('#b-wk');
+if(wk){const D=[[2,'周一',['全部做完'],[[9,10],[13,15],[16,17],[20,21]],1],[3,'周二',['全部做完'],[[10,12],[15,16],[19,20]],1],[4,'周三',['还差 2 件'],[[9,11],[14,14.5],[16,18]],1],[5,'周四',['Q4 预算、发布页文案'],[[7,7.67],[9.5,10.5],[11,11.5],[14,16],[16.5,16.85],[18,18.35],[21,21.75]],0,1],[6,'周五',['跟设计过首页、交报销单'],[[9,9.5],[15,16]],0],[7,'周六',['带猫打疫苗'],[[10,11]],0],[8,'周日',['京都行程定稿'],[[14,16]],0]];
+wk.innerHTML=D.map(d=>`<div class="b-w ${d[4]?'past':''} ${d[5]?'today':''}"><div class="ring"><svg data-m='${JSON.stringify(d[3])}' data-t="${d[5]?1:0}"></svg><b>${d[0]}</b></div><div><h5>${d[1]}</h5><p>${d[2][0]}</p></div></div>`).join('');
+$$('svg',wk).forEach(s=>{const ts=JSON.parse(s.dataset.m).map(x=>({s:x[0],e:x[1],n:'',hi:1}));dial(s,{R:37,r:31,w:7,tasks:ts,now:s.dataset.t==='1'?9.683:undefined,nw:2})})}
+
+let bLeft=1500,bTm=null;const bTxt=$('#b-ft'),bP=$('#b-fp'),bGo=$('#b-go');
+if(bGo)bGo.addEventListener('click',()=>{if(bTm){clearInterval(bTm);bTm=null;bGo.textContent='开始';bGo.classList.remove('run');return}bGo.textContent='暂停';bGo.classList.add('run');const tick=()=>{bLeft--;if(bLeft<=0){bLeft=1500;clearInterval(bTm);bTm=null;bGo.textContent='开始';bGo.classList.remove('run')}bTxt.textContent=String(Math.floor(bLeft/60)).padStart(2,'0')+':'+String(bLeft%60).padStart(2,'0');bP.setAttribute('stroke-dashoffset',992.7*(1-bLeft/1500))};tick();bTm=setInterval(tick,1000)});
+
+/* C：账本合计 */
+function sumC(){const s=$('#c-sum');if(!s)return;const r=$$('#c-mlist .t').filter(t=>!t.classList.contains('c-sub'));const d=r.filter(t=>t.classList.contains('done')).length;s.textContent=`${r.length} 笔　已结 ${d}　未结 ${r.length-d}`}
+
+/* D：七段数码管 */
+const SG={a:'6,0 54,0 46,8 14,8',b:'56,2 56,50 48,46 48,10',c:'56,54 56,102 48,94 48,58',d:'6,104 54,104 46,96 14,96',e:'4,54 4,102 12,94 12,58',f:'4,2 4,50 12,46 12,10',g:'8,52 16,48 44,48 52,52 44,56 16,56'};
+const SD={0:'abcdef',1:'bc',2:'abged',3:'abgcd',4:'fgbc',5:'afgcd',6:'afgedc',7:'abc',8:'abcdefg',9:'abcdfg','-':'g',' ':''};
+function seg(el,str,col){let x=0,h='';col=col||el.dataset.c||'#FF5A14';for(const ch of String(str)){if(ch===':'){h+=`<g transform="translate(${x})"><rect x="4" y="26" width="9" height="9" fill="${col}"/><rect x="4" y="68" width="9" height="9" fill="${col}"/></g>`;x+=20;continue}const on=SD[ch]||'';h+=`<g transform="translate(${x})">`;for(const k in SG)h+=`<polygon points="${SG[k]}" fill="${col}" opacity="${on.includes(k)?1:.07}"/>`;h+='</g>';x+=70}el.innerHTML=`<svg viewBox="-3 -2 ${x-2} 108" style="transform:skewX(-5deg)">${'<g>'+h+'</g>'}</svg>`}
+$$('[data-seg]').forEach(s=>seg(s,s.dataset.seg));
+
+const DL={今天:[['晨跑 5 公里','07:00',0,1],['产品周会','09:30'],['Q4 预算发给财务','11:00',1],['改完发布页文案','14:00',1],['给老周回电话','16:30'],['取快递','18:00'],['读《置身事内》第三章','21:00']],明天:[['跟设计过首页','15:00',1],['交报销单','09:00'],['买猫粮','']],七天:[['带猫打疫苗','周六'],['京都行程定稿','周日',1],['季度复盘提纲','周一'],['还信用卡','周二'],['预约年度体检','周三']],收件:[['订京都机票','',1],['退掉没用的订阅',''],['整理照片',''],['看看新路由器','']],工作:[['Q4 预算发给财务','11:00',1],['改完发布页文案','14:00',1],['给老周回电话','16:30'],['跟设计过首页','明天'],['季度复盘提纲','周一']],生活:[['续交宽带费','昨天',1],['取快递','18:00'],['买猫粮','明天'],['带猫打疫苗','周六']],学习:[['读《置身事内》第三章','21:00'],['日语 N3 单词','周日'],['看完 Swift 并发那一章','']],京都:[['订京都机票','',1],['京都行程定稿','周日'],['办签证','下周'],['换日元','']]};
+const DK=[['今天',6],['明天',3],['七天',14],['收件',4],['工作',12],['生活',7],['学习',3],['京都',6]];
+const ks=$('#d-ks');
+function cntD(){const el=$('#d-cnt');if(!el)return;const r=$$('#d-list .t'),d=r.filter(t=>t.classList.contains('done')).length;seg(el,d+'-'+r.length,'#FF5A14')}
+function showD(n){$('#d-title').textContent=n;$('#d-list').innerHTML=DL[n].map(x=>`<div class="t ${x[2]?'p1':''} ${x[3]?'done':''}"><button class="ck"></button>${x[2]?'<i class="pd"></i>':''}<span class="tt">${x[0]}</span><span class="tm">${x[1]}</span></div>`).join('');cntD()}
+if(ks){ks.innerHTML=DK.map((k,i)=>`<button class="d-k ${i?'':'on'}" data-k="${k[0]}"><em>${k[1]}</em>${k[0]}</button>`).join('');ks.addEventListener('click',e=>{const b=e.target.closest('.d-k');if(!b)return;$$('.d-k',ks).forEach(x=>x.classList.toggle('on',x===b));showD(b.dataset.k)});showD('今天')}
+
+/* D：habit 点阵 */
+const HB=[['早起','111111111111111'],['跑步','101101011010110'],['阅读','011111111011100'],['喝水','111011110111111'],['冥想','000110010001000']];
+const hbs=$('#d-hbs');
+function updHabit(){const c=$('#d-hc');if(!c)return;const n=$$('#d-hbs .td.on').length;seg(c,n+'-'+HB.length,'#F1EEE6')}
+const mh=$('#d-mh');if(mh){mh.innerHTML=HB.slice(0,4).map(h=>`<div>${h[0]}<span class="d-dots" style="grid-template-columns:repeat(14,1fr)">${h[1].slice(0,14).split('').map((c,i)=>`<u class="${c==='1'?'on':''}"></u>`).join('')}</span></div>`).join('')}
+if(hbs){hbs.innerHTML=HB.map(h=>{const cells=h[1].slice(0,14);const st=(()=>{let s=0;for(let i=cells.length-1;i>=0&&cells[i]==='1';i--)s++;return s})();return `<div class="d-hb"><h4>${h[0]}<span class="seg" data-seg="${String(st).padStart(2,' ')}" data-c="#FF5A14"></span></h4><div class="d-dots">${cells.split('').map((c,i)=>`<u class="${c==='1'?'on':''} ${i===13?'td':''}"></u>`).join('')}</div></div>`}).join('');$$('[data-seg]',hbs).forEach(s=>seg(s,s.dataset.seg));updHabit()}
+
+/* D：旋钮 */
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
+$$('.knob').forEach(k=>{
+  const id=k.dataset.knob,lcd=$(`[data-lcd="${id}"]`),kb=$('.kb',k),go=$(`[data-start="${id}"]`);
+  const S=k.offsetWidth||308,r=S/2;let t='';for(let i=0;i<=60;i++){const a=(-150+i*5)*Math.PI/180,big=i%5===0,r1=r-3,r2=r-(big?13:8),x1=r+r1*Math.sin(a),y1=r-r1*Math.cos(a),x2=r+r2*Math.sin(a),y2=r-r2*Math.cos(a);t+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#55534C" stroke-width="${big?1.6:.8}"/>`}
+  $('.kt',k).innerHTML=`<svg viewBox="0 0 ${S} ${S}">${t}</svg>`;
+  let secs=1500,tm=null;
+  const draw=()=>{kb.style.transform=`rotate(${-150+secs/60*5}deg)`;seg(lcd,fmt(secs),'#FF5A14')};draw();
+  const fromEv=e=>{const rc=k.getBoundingClientRect(),dx=e.clientX-(rc.left+rc.width/2),dy=e.clientY-(rc.top+rc.height/2);let a=Math.atan2(dx,-dy)*180/Math.PI;a=Math.max(-150,Math.min(150,a));secs=Math.round((a+150)/5)*60;draw()};
+  k.addEventListener('pointerdown',e=>{if(tm)return;k.setPointerCapture(e.pointerId);fromEv(e);k.onpointermove=fromEv;k.style.cursor='grabbing'});
+  k.addEventListener('pointerup',()=>{k.onpointermove=null;k.style.cursor=''});
+  if(go)go.addEventListener('click',()=>{if(tm){clearInterval(tm);tm=null;go.textContent='开始';go.classList.remove('run');return}if(secs<=0)secs=1500;go.textContent='暂停';go.classList.add('run');tm=setInterval(()=>{secs=Math.max(0,secs-3);draw();if(secs<=0){clearInterval(tm);tm=null;go.textContent='开始';go.classList.remove('run')}},100)});
+});
+
+/* F：撕页黄历 */
+const FD=[{d:5,w:'星期四',l:'九月廿七',a:'霜降',b:'立冬还有<b>两日</b>',red:0,y:[['续交宽带费','昨天','over p1'],['产品周会','09:30'],['Q4 预算发给财务','11:00','p1'],['改完发布页文案','14:00','p1'],['给老周回电话','16:30'],['取快递','18:00'],['读《置身事内》第三章','21:00']],j:['不刷短视频','不在睡前回工作消息','不喝第三杯咖啡']},
+{d:6,w:'星期五',l:'九月廿八',a:'霜降',b:'立冬还有<b>一日</b>',red:0,y:[['跟设计过首页','15:00','p1'],['交报销单','09:00'],['买猫粮','']],j:['不开没有议程的会','不刷短视频']},
+{d:7,w:'星期六',l:'九月廿九',a:'<b>立冬</b>',b:'吃饺子',red:1,y:[['带猫打疫苗','10:00','p1'],['包饺子','18:00']],j:['不看工作消息','不熬夜']}];
+const fRows=(l,pm)=>{return l.map(x=>`<div class="t ${x[2]||''}"><span class="tt">${x[0]}</span><span class="tm">${x[1]}</span><button class="ck"></button></div>`).join('')};
+const fNo=(l,pm)=>l.map(x=>`<div class="t no"><span class="tt">${x}</span><button class="ck"></button></div>`).join('');
+$$('.f-pad').forEach(p=>{
+  const pm=p.dataset.pad,yy=document.getElementById(p.dataset.y),jj=document.getElementById(p.dataset.j);
+  p.innerHTML=FD.map((d,i)=>`<div class="f-page" style="z-index:${9-i}"><div class="f-bind">二〇二六 · 十一月</div><div class="f-perf"></div><div class="f-body"><div class="f-num ${d.red?'red':''}">${d.d}</div><div class="f-v l">${d.l}</div><div class="f-v r">${d.w}</div></div>${pm==='m'?`<div class="f-foot"><span>丙午年 戊戌月</span><span>${d.a} · ${d.b}</span></div>`:''}</div>`).join('');
+  const pages=$$('.f-page',p);let idx=0;
+  const show=()=>{const d=FD[idx];yy.innerHTML=fRows(d.y,pm);jj.innerHTML=fNo(d.j,pm)};show();
+  p.addEventListener('click',()=>{
+    if(idx<FD.length-1){pages[idx].classList.add('torn');idx++}else{pages.forEach(x=>x.classList.remove('torn'));idx=0}
+    show();
+  });
+});
+const fg=$('#f-gr');
+if(fg){const L=['廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十','十月','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二'];let h='';for(let d=1;d<=30;d++){const w=(d-1)%7,jq={7:'立冬',22:'小雪'}[d];h+=`<div class="${w===0||w===6?'we ':''}${d<5?'ok ':''}${d===5?'td ':''}${jq?'jq':''}"><b>${d}</b><small>${jq||L[d-1]}</small></div>`}fg.innerHTML=h}
+
+/* F：一炷香（演示加速） */
+const fl=$('#f-lit');
+if(fl){const CN=['零','一','二','三','四','五','六','七','八','九'];const cn=n=>n>=20?CN[Math.floor(n/10)]+'十'+(n%10?CN[n%10]:''):n>=10?'十'+(n%10?CN[n%10]:''):CN[n];
+  let L=1500,tm=null;const scr=$('#f-xs'),st=$('#f-st'),em=$('#f-em'),tr=$('#f-tr'),ash=$('#f-ash');
+  const draw=()=>{const y=190+(1-L/1500)*300;st.setAttribute('y1',y);em.setAttribute('cy',y);$('.f-smoke').setAttribute('transform',`translate(0 ${y-190})`);ash.setAttribute('opacity',Math.min(1,(1-L/1500)*1.6));tr.textContent=L<=0?'香尽':cn(Math.ceil(L/60))+'分'};
+  fl.addEventListener('click',()=>{if(tm){clearInterval(tm);tm=null;fl.textContent='点香';scr.classList.remove('lit');em.setAttribute('opacity',0);return}if(L<=0){L=1500;draw()}fl.textContent='灭香';scr.classList.add('lit');em.setAttribute('opacity',1);tm=setInterval(()=>{L=Math.max(0,L-6);draw();if(L<=0){clearInterval(tm);tm=null;fl.textContent='再点';scr.classList.remove('lit');em.setAttribute('opacity',0)}},100)});
+}
+})();
+</script>
+</body>
+</html>

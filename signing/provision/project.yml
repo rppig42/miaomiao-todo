@@ -1,0 +1,26 @@
+name: TodoProv
+options:
+  deploymentTarget: {macOS: "14.0"}
+targets:
+  TodoProv:
+    type: application
+    platform: macOS
+    sources: [Sources]
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Todo
+    entitlements:
+      path: App.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.rppig42.todo]
+        com.apple.developer.icloud-services: [CloudKit]
+        com.apple.developer.aps-environment: development
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rppig42.todo
+        DEVELOPMENT_TEAM: 9PGVRX5XJ2
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: YES
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"

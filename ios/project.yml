@@ -1,0 +1,109 @@
+# 用 xcodegen 生成工程，xcodeproj 不入库。构建见 scripts/ios.sh。
+name: Todo
+options:
+  bundleIdPrefix: com.rppig42
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: 9PGVRX5XJ2
+    CODE_SIGN_STYLE: Automatic
+    # native/CloudSync.swift 和 Mac 版共用，按 Swift 5 模式编译。
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    TARGETED_DEVICE_FAMILY: "1"
+    # 连哪个 CloudKit 环境。App 和小组件的权限、Info.plist 都从这里取，两边必须一致。
+    # 调试包也可以连生产环境；改成 Development 就回到测试用的开发环境。
+    CLOUD_ENVIRONMENT: Production
+targets:
+  Todo:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Shared
+      - path: ../native/CloudSync.swift
+      # 小组件的视图和规则也编进 App，调试时用来出图和跑测试。
+      - path: Widgets
+        excludes:
+          - WidgetBundle.swift
+          - Info.plist
+          - Widgets.entitlements
+      # 网页部分和 Mac 版是同一份代码
+      - path: ../dist
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: TodoWidgets
+        embed: true
+    entitlements:
+      path: App/App.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.rppig42.todo]
+        com.apple.developer.icloud-services: [CloudKit]
+        com.apple.developer.icloud-container-environment: $(CLOUD_ENVIRONMENT)
+        aps-environment: development
+        com.apple.security.application-groups: [group.com.rppig42.todo]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rppig42.todo
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: 喵喵の清单
+        CFBundleDevelopmentRegion: zh_CN
+        CFBundleLocalizations: [zh_CN]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        TodoCloudEnvironment: $(CLOUD_ENVIRONMENT)
+        UILaunchScreen:
+          UIColorName: Surface
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        # 别的设备改了数据时，CloudKit 推送唤醒 App，让小组件刷新。
+        UIBackgroundModes: [remote-notification]
+        CFBundleURLTypes:
+          - CFBundleURLName: com.rppig42.todo
+            CFBundleURLSchemes: [mmtodo]
+  TodoWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+        excludes:
+          - Info.plist
+          - Widgets.entitlements
+          - WidgetDebug.swift
+      - path: Shared
+    entitlements:
+      path: Widgets/Widgets.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers: [iCloud.com.rppig42.todo]
+        com.apple.developer.icloud-services: [CloudKit]
+        com.apple.developer.icloud-container-environment: $(CLOUD_ENVIRONMENT)
+        com.apple.security.application-groups: [group.com.rppig42.todo]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rppig42.todo.widgets
+        SKIP_INSTALL: YES
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: 喵喵の清单
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        TodoCloudEnvironment: $(CLOUD_ENVIRONMENT)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+schemes:
+  Todo:
+    build:
+      targets:
+        Todo: all
+        TodoWidgets: all

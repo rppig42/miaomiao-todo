@@ -1,0 +1,20 @@
+{
+  "name": "喵喵の清单",
+  "slug": "todo",
+  "identifier": "com.rppig42.todo",
+  "version": "0.1.0",
+  "copyright": "© 2026 rppig42",
+  "devUrl": "http://localhost:5174",
+  "devCommand": "npm run dev:web",
+  "buildCommand": "npm run build:web",
+  "frontendDist": "dist",
+  "bindings": "src/mygo.ts",
+  "out": "build",
+  "macos": {
+    "minimumSystemVersion": "14.0",
+    "infoPlist": {
+      "CFBundleDevelopmentRegion": "zh_CN",
+      "CFBundleLocalizations": ["zh_CN"]
+    }
+  }
+}
